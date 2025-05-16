@@ -8,9 +8,9 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using IdentityServerAPI.Models;
 using IdentityServerAPI.Configuration;
-using IdentityServerAPI.Repositories; // Namespace cho CustomUserStore, CustomRoleStore
-using IdentityServerAPI.Services;     // Namespace cho EmailService, AuthService
-using IdentityServerAPI.Services.Interfaces; // Namespace cho IAuthService, IEmailService
+using IdentityServerAPI.Repositories; 
+using IdentityServerAPI.Services;
+using IdentityServerAPI.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -177,18 +177,20 @@ var app = builder.Build();
 // --- Configure the HTTP request pipeline. ---
 if (app.Environment.IsDevelopment())
 {
+    // Cấu hình cho môi trường Development
     app.UseSwagger();
     app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "IdentityServerAPI v1"));
     app.UseDeveloperExceptionPage();
 }
-else
+else // Môi trường Staging, Production, hoặc bất kỳ môi trường nào không phải Development
 {
     // Thêm global error handler cho production
     // app.UseExceptionHandler("/Error");
-    // app.UseHsts(); // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+    app.UseHsts(); // HTTP Strict Transport Security - Bắt buộc trình duyệt chỉ dùng HTTPS
+    app.UseHttpsRedirection();
 }
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection(); //vô hiệu hóa code để chạy thành công (chỉ áp dụng với dev_by VT)
 
 app.UseRouting(); // Quan trọng: UseRouting trước UseCors và UseAuthentication/UseAuthorization
 

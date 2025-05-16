@@ -34,7 +34,7 @@ const RegisterPage = () => {
       >
         {/* <img src={yourLogo} alt="App Logo" style={{ width: '150px', marginBottom: '20px' }} /> */}
         <Typography component="h1" variant="h3" sx={{ fontWeight: 'bold', mb: 2, textAlign:'center' }}>
-          IDENTITY APP, Xin Chào!
+          Vietbando, Xin Chào!
         </Typography>
         <Typography variant="h6" sx={{ color: 'text.secondary', textAlign:'center' }}>
           Nền tảng cung cấp giải pháp xác thực và quản lý tài khoản tập trung.
