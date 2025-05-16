@@ -1,49 +1,63 @@
+// IdentityServerAPI/Services/EmailService.cs
 using MailKit.Net.Smtp;
 using MimeKit;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
+using IdentityServerAPI.Configuration;
+using IdentityServerAPI.Services.Interfaces; // Thêm using cho interface
 using System.Threading.Tasks;
+using System;
 
 namespace IdentityServerAPI.Services
 {
-    public class EmailService
+    public class EmailService : IEmailService // Implement IEmailService
     {
-        private readonly IConfiguration _configuration;
+        private readonly EmailSettings _emailSettings;
 
-        public EmailService(IConfiguration configuration)
+        public EmailService(IOptions<EmailSettings> emailSettingsOptions)
         {
-            _configuration = configuration;
+            _emailSettings = emailSettingsOptions.Value;
+            if (_emailSettings == null ||
+                string.IsNullOrEmpty(_emailSettings.SmtpServer) ||
+                _emailSettings.SmtpPort <= 0 ||
+                string.IsNullOrEmpty(_emailSettings.SenderEmail) ||
+                string.IsNullOrEmpty(_emailSettings.Username) ||
+                string.IsNullOrEmpty(_emailSettings.Password))
+            {
+                // Bạn có thể log lỗi ở đây nếu có ILogger được inject
+                throw new InvalidOperationException("Email settings are not properly configured or missing.");
+            }
         }
 
         public async Task SendEmailAsync(string toEmail, string subject, string message)
         {
-            var emailSettings = _configuration.GetSection("EmailSettings");
-
-            var smtpServer = emailSettings["SmtpServer"];
-            var smtpPortString = emailSettings["SmtpPort"];
-            var senderEmail = emailSettings["SenderEmail"];
-            var username = emailSettings["Username"];
-            var password = emailSettings["Password"];
-
-            if (string.IsNullOrEmpty(smtpServer) || 
-                !int.TryParse(smtpPortString, out var smtpPort) ||
-                string.IsNullOrEmpty(senderEmail) || 
-                string.IsNullOrEmpty(username) || 
-                string.IsNullOrEmpty(password))
-            {
-                throw new InvalidOperationException("Email settings are not properly configured.");
-            }
-
             var email = new MimeMessage();
-            email.From.Add(new MailboxAddress("Admin", senderEmail));
-            email.To.Add(new MailboxAddress("", toEmail));
+            email.From.Add(new MailboxAddress("Admin", _emailSettings.SenderEmail)); // Bạn có thể muốn tên "Admin" này cũng là cấu hình
+            email.To.Add(new MailboxAddress("", toEmail)); // Tên người nhận có thể để trống hoặc lấy từ đâu đó
             email.Subject = subject;
-            email.Body = new TextPart("plain") { Text = message };
+            email.Body = new TextPart(MimeKit.Text.TextFormat.Html) { Text = message }; // Thay đổi thành Html nếu message của bạn có HTML
 
             using var smtp = new SmtpClient();
-            await smtp.ConnectAsync(smtpServer, smtpPort, false);
-            await smtp.AuthenticateAsync(username, password);
-            await smtp.SendAsync(email);
-            await smtp.DisconnectAsync(true);
+            try
+            {
+                // Cân nhắc thêm SecureSocketOptions dựa trên cấu hình SmtpPort
+                var secureSocketOptions = _emailSettings.SmtpPort == 465 ? MailKit.Security.SecureSocketOptions.SslOnConnect : MailKit.Security.SecureSocketOptions.StartTlsWhenAvailable;
+                await smtp.ConnectAsync(_emailSettings.SmtpServer, _emailSettings.SmtpPort, secureSocketOptions);
+                await smtp.AuthenticateAsync(_emailSettings.Username, _emailSettings.Password);
+                await smtp.SendAsync(email);
+            }
+            catch (Exception ex)
+            {
+                // Log lỗi chi tiết ở đây (ví dụ: dùng ILogger)
+                // throw; // Ném lại lỗi hoặc xử lý theo cách khác
+                throw new InvalidOperationException($"Failed to send email to {toEmail}. Error: {ex.Message}", ex);
+            }
+            finally
+            {
+                if (smtp.IsConnected)
+                {
+                    await smtp.DisconnectAsync(true);
+                }
+            }
         }
     }
 }

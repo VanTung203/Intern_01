@@ -5,7 +5,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace IdentityServerAPI.Services
+namespace IdentityServerAPI.Repositories
 {
     public class RoleStore : IRoleStore<ApplicationRole>
     {

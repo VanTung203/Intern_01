@@ -1,8 +1,8 @@
-namespace IdentityServerAPI.Models
+// IdentityServerAPI/DTOs/LoginDto.cs
+namespace IdentityServerAPI.DTOs 
 {
-    public class RegisterModel
+    public class LoginDto
     {
-        public string FullName { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
     }
