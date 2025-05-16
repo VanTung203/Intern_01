@@ -4,13 +4,12 @@ import {
   TextField, Button, Box, Typography, Checkbox, FormControlLabel,
   Link as MuiLink, Grid, IconButton, InputAdornment, Alert, CircularProgress
 } from '@mui/material';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { Link as RouterLink } from 'react-router-dom';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
-import { register } from '../../services/authService'; // << Bỏ comment dòng này và đảm bảo file này đúng
+import { register } from '../../services/authService';
 
 const RegisterForm = () => {
-  const navigate = useNavigate(); // Để điều hướng sau khi đăng ký thành công (tùy chọn)
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -19,12 +18,12 @@ const RegisterForm = () => {
     confirmPassword: '',
     agreedToTerms: false,
   });
-  const [errors, setErrors] = useState({}); // Lỗi validation từ client-side
+  const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [apiMessage, setApiMessage] = useState(null); // { type: 'success' | 'error', text: string }
-  const [apiErrorDetails, setApiErrorDetails] = useState([]); // Mảng các string lỗi chi tiết từ API
+  const [apiMessage, setApiMessage] = useState(null);
+  const [apiErrorDetails, setApiErrorDetails] = useState([]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -32,12 +31,9 @@ const RegisterForm = () => {
       ...prevData,
       [name]: type === 'checkbox' ? checked : value,
     }));
-
-    // Xóa lỗi validation của trường đang được sửa
     if (errors[name]) {
       setErrors(prevErrors => ({ ...prevErrors, [name]: '' }));
     }
-    // Xóa thông báo API cũ khi người dùng bắt đầu sửa form
     if (apiMessage) setApiMessage(null);
     if (apiErrorDetails.length > 0) setApiErrorDetails([]);
   };
@@ -48,14 +44,19 @@ const RegisterForm = () => {
 
   const validate = () => {
     let tempErrors = {};
-    if (!formData.lastName.trim()) tempErrors.lastName = "Họ và tên đệm là bắt buộc.";
-    if (!formData.firstName.trim()) tempErrors.firstName = "Tên là bắt buộc.";
     if (!formData.email.trim()) tempErrors.email = "Địa chỉ email là bắt buộc.";
     else if (!/\S+@\S+\.\S+/.test(formData.email)) tempErrors.email = "Địa chỉ email không hợp lệ.";
+
     if (!formData.password) tempErrors.password = "Mật khẩu là bắt buộc.";
     else if (formData.password.length < 6) tempErrors.password = "Mật khẩu phải có ít nhất 6 ký tự.";
+
     if (!formData.confirmPassword) tempErrors.confirmPassword = "Xác nhận mật khẩu là bắt buộc.";
     else if (formData.password !== formData.confirmPassword) tempErrors.confirmPassword = "Mật khẩu không khớp.";
+
+    // Họ và Tên không còn là bắt buộc theo mẫu (không có dấu *)
+    // if (!formData.lastName.trim()) tempErrors.lastName = "Họ và tên đệm là bắt buộc.";
+    // if (!formData.firstName.trim()) tempErrors.firstName = "Tên là bắt buộc.";
+
     if (!formData.agreedToTerms) tempErrors.agreedToTerms = "Bạn phải đồng ý với điều khoản dịch vụ.";
     setErrors(tempErrors);
     return Object.keys(tempErrors).length === 0;
@@ -63,9 +64,8 @@ const RegisterForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setApiMessage(null); // Reset thông báo API cũ trước mỗi lần submit
+    setApiMessage(null);
     setApiErrorDetails([]);
-
     if (validate()) {
       setIsLoading(true);
       try {
@@ -75,37 +75,26 @@ const RegisterForm = () => {
           firstName: formData.firstName,
           lastName: formData.lastName,
         };
-
-        const response = await register(payload); // Gọi API thật từ authService
-
-        // Backend trả về { message: "..." } khi thành công
-        setApiMessage({ type: 'success', text: response.message || "Đăng ký thành công. Vui lòng kiểm tra email để xác thực tài khoản." });
-        // Reset form và lỗi client-side
+        const response = await register(payload);
+        setApiMessage({ type: 'success', text: response.message || "Đăng ký thành công. Vui lòng kiểm tra email." });
         setFormData({ firstName: '', lastName: '', email: '', password: '', confirmPassword: '', agreedToTerms: false });
         setErrors({});
-        // Tùy chọn: Chuyển hướng sau một khoảng thời gian
         // setTimeout(() => navigate('/login'), 3000);
       } catch (error) {
         if (error.response && error.response.data) {
             const errorData = error.response.data;
             if (errorData.errors && Array.isArray(errorData.errors)) {
-                // Lỗi từ IdentityResult.Errors (mảng các object {code, description})
                 setApiErrorDetails(errorData.errors.map(err => err.description || err.code));
-                setApiMessage({ type: 'error', text: errorData.title || 'Đăng ký thất bại. Vui lòng kiểm tra các lỗi.' });
+                setApiMessage({ type: 'error', text: errorData.title || 'Đăng ký thất bại.' });
             } else if (errorData.message) {
-                // Lỗi dạng message đơn giản từ backend (ví dụ: Unauthorized)
                 setApiMessage({ type: 'error', text: errorData.message });
             } else if (typeof errorData === 'string') {
-                // Nếu backend trả về một chuỗi lỗi đơn giản
                  setApiMessage({ type: 'error', text: errorData });
-            }
-             else {
-                // Lỗi không có cấu trúc rõ ràng từ backend
-                setApiMessage({ type: 'error', text: 'Đã có lỗi không mong muốn từ máy chủ.' });
+            } else {
+                setApiMessage({ type: 'error', text: 'Lỗi không mong muốn từ máy chủ.' });
             }
         } else {
-          // Lỗi mạng hoặc lỗi không xác định khác
-          setApiMessage({ type: 'error', text: error.message || 'Đã có lỗi xảy ra. Vui lòng thử lại.' });
+          setApiMessage({ type: 'error', text: error.message || 'Lỗi mạng hoặc không thể kết nối.' });
         }
       } finally {
         setIsLoading(false);
@@ -113,17 +102,89 @@ const RegisterForm = () => {
     }
   };
 
+  // Hàm helper để render TextField với label nổi
+  const renderFloatingLabelTextField = ({
+    name,
+    labelText,
+    placeholder,
+    type = 'text',
+    autoComplete = name,
+    isRequired = true,
+    autoFocus = false,
+    isPasswordType = false,
+    showPasswordState,
+    togglePasswordVisibility,
+  }) => (
+    <Box sx={{ position: 'relative', mb: 2.25 }}> {/* mb để tạo khoảng cách giữa các field */}
+      <Typography
+        variant="caption"
+        component="label"
+        htmlFor={name}
+        sx={{
+          position: 'absolute',
+          top: '-8px',
+          left: '12px',
+          backgroundColor: (theme) => theme.palette.background.paper,
+          px: '5px',
+          fontSize: '11.5px',
+          color: errors[name] && !apiMessage ? 'error.main' : 'text.secondary',
+          fontWeight: 500,
+          zIndex: 1,
+        }}
+      >
+        {labelText} {isRequired && '*'}
+      </Typography>
+      <TextField
+        required={isRequired}
+        margin="none"
+        fullWidth
+        id={name}
+        name={name}
+        type={isPasswordType ? (showPasswordState ? 'text' : 'password') : type}
+        autoComplete={autoComplete}
+        placeholder={placeholder}
+        value={formData[name]}
+        onChange={handleChange}
+        error={!!errors[name] && !apiMessage}
+        helperText={!apiMessage ? errors[name] : (name === 'password' && !errors[name] && !formData[name] ? 'Tối thiểu 6+ ký tự' : '')}
+        disabled={isLoading}
+        size="small"
+        autoFocus={autoFocus}
+        InputProps={isPasswordType ? {
+          endAdornment: (
+            <InputAdornment position="end">
+              <IconButton
+                aria-label={`toggle ${name} visibility`}
+                onClick={togglePasswordVisibility}
+                onMouseDown={handleMouseDownPassword}
+                edge="end"
+                disabled={isLoading}
+                size="small"
+                sx={{ color: 'text.secondary', mr: -0.5 }}
+              >
+                {showPasswordState ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+              </IconButton>
+            </InputAdornment>
+          ),
+        } : null}
+        inputProps={{
+          style: { paddingTop: '12px', paddingBottom: '12px', fontSize: '14px' }
+        }}
+      />
+    </Box>
+  );
+
+
   return (
     <Box component="form" onSubmit={handleSubmit} noValidate sx={{ width: '100%' }}>
-      {/* Hiển thị thông báo API */}
       {apiMessage && (
-        <Alert severity={apiMessage.type} sx={{ mb: 2 }} onClose={() => { setApiMessage(null); setApiErrorDetails([]); }}>
+        <Alert severity={apiMessage.type} sx={{ mb: 2.5 }} onClose={() => { setApiMessage(null); setApiErrorDetails([]); }}>
           {apiMessage.text}
           {apiErrorDetails.length > 0 && (
-            <ul style={{ margin: '8px 0 0 0', paddingLeft: '20px' }}>
+            <ul style={{ margin: '8px 0 0 0', paddingLeft: '20px', listStyleType: 'disc' }}>
               {apiErrorDetails.map((detail, index) => (
                 <li key={index}>
-                  <Typography variant="caption" display="block">
+                  <Typography variant="caption" component="span">
                     {detail}
                   </Typography>
                 </li>
@@ -133,105 +194,85 @@ const RegisterForm = () => {
         </Alert>
       )}
 
-      <Grid container spacing={2} sx={{ mb: 1 }}>
+      {renderFloatingLabelTextField({
+        name: "email",
+        labelText: "Địa chỉ email",
+        placeholder: "nguyenvana@gmail.com",
+        autoComplete: "email",
+        autoFocus: true
+      })}
+
+      {renderFloatingLabelTextField({
+        name: "password",
+        labelText: "Mật khẩu",
+        placeholder: "Tối thiểu 6+ ký tự",
+        type: "password", // Sẽ được xử lý bởi isPasswordType
+        autoComplete: "new-password",
+        isPasswordType: true,
+        showPasswordState: showPassword,
+        togglePasswordVisibility: handleClickShowPassword
+      })}
+
+      {renderFloatingLabelTextField({
+        name: "confirmPassword",
+        labelText: "Xác nhận mật khẩu",
+        placeholder: "", // Để trống placeholder nếu không cần
+        type: "password", // Sẽ được xử lý bởi isPasswordType
+        autoComplete: "new-password",
+        isPasswordType: true,
+        showPasswordState: showConfirmPassword,
+        togglePasswordVisibility: handleClickShowConfirmPassword
+      })}
+
+      <Grid container spacing={1.5} sx={{ mb: 0.75 }}> {/* Giảm mb của Grid */}
         <Grid item xs={12} sm={6}>
-          <TextField
-            margin="none"
-            required
-            fullWidth
-            id="lastName"
-            label="Họ và tên đệm"
-            name="lastName"
-            autoComplete="family-name"
-            value={formData.lastName}
-            onChange={handleChange}
-            error={!!errors.lastName && !apiMessage} // Chỉ hiển thị lỗi client nếu không có lỗi API
-            helperText={!apiMessage ? errors.lastName : ''}
-            disabled={isLoading}
-            autoFocus // Trường đầu tiên
-          />
+          {renderFloatingLabelTextField({
+            name: "lastName",
+            labelText: "Họ và tên đệm",
+            placeholder: "Nguyễn Văn",
+            autoComplete: "family-name",
+            isRequired: false // Không bắt buộc
+          })}
         </Grid>
         <Grid item xs={12} sm={6}>
-          <TextField
-            margin="none"
-            required
-            fullWidth
-            id="firstName"
-            label="Tên"
-            name="firstName"
-            autoComplete="given-name"
-            value={formData.firstName}
-            onChange={handleChange}
-            error={!!errors.firstName && !apiMessage}
-            helperText={!apiMessage ? errors.firstName : ''}
-            disabled={isLoading}
-          />
+          {renderFloatingLabelTextField({
+            name: "firstName",
+            labelText: "Tên",
+            placeholder: "A",
+            autoComplete: "given-name",
+            isRequired: false // Không bắt buộc
+          })}
         </Grid>
       </Grid>
-      <TextField
-        margin="normal"
-        required
-        fullWidth
-        id="email"
-        label="Địa chỉ email"
-        name="email"
-        autoComplete="email"
-        value={formData.email}
-        onChange={handleChange}
-        error={!!errors.email && !apiMessage}
-        helperText={!apiMessage ? errors.email : ''}
-        disabled={isLoading}
-      />
-      <TextField
-        margin="normal"
-        required
-        fullWidth
-        name="password"
-        label="Mật khẩu"
-        type={showPassword ? 'text' : 'password'}
-        id="password"
-        autoComplete="new-password"
-        value={formData.password}
-        onChange={handleChange}
-        error={!!errors.password && !apiMessage}
-        helperText={!apiMessage ? (errors.password || "Tối thiểu 6+ ký tự") : ''}
-        disabled={isLoading}
-        InputProps={{
-          endAdornment: ( <InputAdornment position="end"> <IconButton aria-label="toggle password visibility" onClick={handleClickShowPassword} onMouseDown={handleMouseDownPassword} edge="end" disabled={isLoading} > {showPassword ? <VisibilityOff /> : <Visibility />} </IconButton> </InputAdornment> ),
-        }}
-      />
-      <TextField
-        margin="normal"
-        required
-        fullWidth
-        name="confirmPassword"
-        label="Xác nhận mật khẩu"
-        type={showConfirmPassword ? 'text' : 'password'}
-        id="confirmPassword"
-        autoComplete="new-password"
-        value={formData.confirmPassword}
-        onChange={handleChange}
-        error={!!errors.confirmPassword && !apiMessage}
-        helperText={!apiMessage ? errors.confirmPassword : ''}
-        disabled={isLoading}
-        InputProps={{
-          endAdornment: ( <InputAdornment position="end"> <IconButton aria-label="toggle confirm password visibility" onClick={handleClickShowConfirmPassword} onMouseDown={handleMouseDownPassword} edge="end" disabled={isLoading} > {showConfirmPassword ? <VisibilityOff /> : <Visibility />} </IconButton> </InputAdornment> ),
-        }}
-      />
+
       <FormControlLabel
-        control={ <Checkbox name="agreedToTerms" color="primary" checked={formData.agreedToTerms} onChange={handleChange} disabled={isLoading} /> }
-        label={ <Typography variant="body2"> Tôi cam kết đồng ý với {' '} <MuiLink component={RouterLink} to="/terms" variant="body2" onClick={(e) => {e.preventDefault(); alert('Link to Terms'); /* TODO */}}> điều khoản dịch vụ </MuiLink> {' & '} <MuiLink component={RouterLink} to="/privacy" variant="body2" onClick={(e) => {e.preventDefault(); alert('Link to Privacy'); /* TODO */}}> chính sách bảo mật </MuiLink> {' của IDENTITY APP'} </Typography>}
-        sx={{ mt: 1, mb: 1 }}
+        control={ <Checkbox name="agreedToTerms" color="primary" checked={formData.agreedToTerms} onChange={handleChange} disabled={isLoading} size="small" sx={{p: '4px', mr: 0.25}} /> }
+        label={ <Typography variant="body2" sx={{fontSize: '13px', color: 'text.secondary'}}> Tôi cam kết đồng ý với {' '} <MuiLink component={RouterLink} to="/terms" variant="body2" sx={{ fontWeight: 500, fontSize: '13px', color: 'primary.main', textDecoration:'none' }} onClick={(e) => {e.preventDefault(); alert('Link to Terms'); }}> điều khoản dịch vụ & chính sách bảo mật</MuiLink> {' của Vietbando'} </Typography>}
+        sx={{ mt: 1, mb: 1, alignItems: 'center' }}
       />
-      {errors.agreedToTerms && !apiMessage && ( <Typography color="error" variant="caption" display="block" sx={{mb:1}}>{errors.agreedToTerms}</Typography> )}
+      {errors.agreedToTerms && !apiMessage && ( <Typography color="error" variant="caption" display="block" sx={{mb:1.5, mt: -0.5}}>{errors.agreedToTerms}</Typography> )}
 
       <Button
         type="submit"
         fullWidth
         variant="contained"
         disabled={isLoading}
-        sx={{ mt: 2, mb: 2, py: 1.5, backgroundColor: '#212B36', '&:hover': { backgroundColor: '#454F5B' } }}
-        startIcon={isLoading ? <CircularProgress size={20} color="inherit" /> : null}
+        sx={{
+          mt: 2,
+          mb: 2,
+          py: 1.25,
+          backgroundColor: '#212B36',
+          color: 'common.white',
+          fontWeight: 600,
+          '&:hover': {
+            backgroundColor: '#161C24',
+          },
+          textTransform: 'none',
+          fontSize: '0.9rem',
+          boxShadow: 'none',
+          borderRadius: '8px'
+        }}
+        startIcon={isLoading ? <CircularProgress size={18} color="inherit" /> : null}
       >
         {isLoading ? 'Đang tạo tài khoản...' : 'Tạo tài khoản'}
       </Button>
