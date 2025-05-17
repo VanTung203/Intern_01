@@ -76,8 +76,8 @@ const PublicPageLayout = ({ children }) => {
           item
           xs={false} // Ẩn trên màn hình rất nhỏ
           sm={6}   // Chiếm nửa màn hình từ sm
-          md={7}   // Chiếm 7/12 từ md
-          lg={7}
+          md={6}   // Chiếm 7/12 từ md
+          lg={6}
           sx={{
             display: { xs: 'none', sm: 'flex' }, // Chỉ hiển thị từ sm trở lên
             flexDirection: 'column',
@@ -103,15 +103,15 @@ const PublicPageLayout = ({ children }) => {
           item
           xs={12} // Chiếm toàn bộ trên xs (khi cột trái ẩn)
           sm={6}
-          md={5}
-          lg={5}
+          md={6}
+          lg={6}
           // Không dùng component={Paper} ở đây nữa, để trang con tự quyết định
           sx={{
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',    // Căn giữa Box con chứa nội dung
             justifyContent: 'center', // Căn giữa Box con chứa nội dung
-            p: { xs: 2.5, sm: 4, md: 5, lg: 6 }, // Padding chung cho cột phải
+            p: { xs: 2, sm: 3, md: 4, lg: 6 }, // Padding chung cho cột phải
             // pl: { xs: 2.5, sm: 6, md: 8, lg: 40 },
             overflowY: 'auto', // Cho phép cuộn nếu nội dung con dài
             backgroundColor: 'background.paper' // Nền trắng cho cột này (hoặc bỏ nếu muốn nó trong suốt)
