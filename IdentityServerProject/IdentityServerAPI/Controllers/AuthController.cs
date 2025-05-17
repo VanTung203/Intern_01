@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using IdentityServerAPI.DTOs; // Hoặc IdentityServerAPI.DTOs.Auth
 using IdentityServerAPI.Services.Interfaces; // Import IAuthService
 using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
 
 namespace IdentityServerAPI.Controllers
 {
@@ -11,10 +12,12 @@ namespace IdentityServerAPI.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService; // Sử dụng IAuthService
-
-        public AuthController(IAuthService authService) // Inject IAuthService
+        private readonly IConfiguration _configuration; // Trường đã được khai báo
+        
+        public AuthController(IAuthService authService, IConfiguration configuration) // Inject IAuthService và IConfiguration
         {
             _authService = authService;
+            _configuration = configuration; // Gán IConfiguration được inject vào trường _configuration
         }
 
         [HttpPost("register")]
@@ -31,26 +34,30 @@ namespace IdentityServerAPI.Controllers
         [HttpGet("confirmemail")]
         public async Task<IActionResult> ConfirmEmail(string userId, string token)
         {
-            // URL của trang login trên frontend sau khi xác thực email thành công
-            // Nên lấy từ configuration thay vì hardcode
-            var frontendLoginUrl = "http://localhost:3000/login"; // THAY THẾ BẰNG URL THỰC TẾ HOẶC CONFIG
-            var result = await _authService.ConfirmUserEmailAsync(userId, token, frontendLoginUrl);
+            // Lấy URL của trang "xác thực email thành công" trên frontend từ configuration
+            var frontendConfirmedUrl = _configuration["FrontendEmailConfirmedUrl"];
+            if (string.IsNullOrEmpty(frontendConfirmedUrl))
+            {
+                // Log lỗi hoặc sử dụng một URL mặc định an toàn
+                frontendConfirmedUrl = "http://localhost:3000/login"; // Mặc định về login nếu không có config
+                // Hoặc throw exception nếu đây là cấu hình bắt buộc
+            }
 
-            // Xử lý kết quả từ service. Nếu service trả về OkObjectResult chứa redirectUrl,
-            // controller có thể quyết định redirect hoặc trả về JSON cho client tự xử lý.
+            var result = await _authService.ConfirmUserEmailAsync(userId, token, frontendConfirmedUrl);
+
             if (result is OkObjectResult okResult && okResult.Value is { } value)
             {
                 var redirectToProperty = value.GetType().GetProperty("redirectTo");
                 if (redirectToProperty != null)
                 {
-                    var redirectTo = redirectToProperty.GetValue(value) as string;
+                var redirectTo = redirectToProperty.GetValue(value) as string;
                     if (!string.IsNullOrEmpty(redirectTo))
                     {
-                        return Redirect(redirectTo); // Redirect phía server
+                        return Redirect(redirectTo); // Backend sẽ redirect trình duyệt đến frontendConfirmedUrl
                     }
                 }
             }
-            return result; // Trả về kết quả trực tiếp từ service
+            return BadRequest("Xác minh email thất bại hoặc có lỗi xảy ra."); // Hoặc trả về một trang lỗi của frontend
         }
 
         [HttpPost("login")]

@@ -19,7 +19,7 @@ function App() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/login" element={<LoginPagePlaceholder />} /> {/* Thay bằng LoginPage thật */}
         <Route path="/please-verify-email" element={<PleaseVerifyEmailPage />} />
-        <Route path="/confirm-email" element={<EmailConfirmedPage />} /> {/* Route để xử lý link xác thực */}
+        <Route path="/email-confirmed" element={<EmailConfirmedPage />} /> {/* Route để xử lý link xác thực */}
         <Route path="*" element={<Typography variant="h3" sx={{ textAlign: 'center', mt: 5 }}>404 Page Not Found</Typography>} />
       </Routes>
     </Router>

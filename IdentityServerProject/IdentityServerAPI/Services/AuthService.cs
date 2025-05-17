@@ -20,7 +20,7 @@ namespace IdentityServerAPI.Services
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
-        private readonly IEmailService _emailService; // Sửa thành IEmailService
+        private readonly IEmailService _emailService;
         private readonly IConfiguration _configuration;
 
         public AuthService(
