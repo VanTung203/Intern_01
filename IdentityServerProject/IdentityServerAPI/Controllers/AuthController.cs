@@ -33,7 +33,7 @@ namespace IdentityServerAPI.Controllers
         {
             // URL của trang login trên frontend sau khi xác thực email thành công
             // Nên lấy từ configuration thay vì hardcode
-            var frontendLoginUrl = "https://yourfrontend.com/login"; // THAY THẾ BẰNG URL THỰC TẾ HOẶC CONFIG
+            var frontendLoginUrl = "http://localhost:3000/login"; // THAY THẾ BẰNG URL THỰC TẾ HOẶC CONFIG
             var result = await _authService.ConfirmUserEmailAsync(userId, token, frontendLoginUrl);
 
             // Xử lý kết quả từ service. Nếu service trả về OkObjectResult chứa redirectUrl,

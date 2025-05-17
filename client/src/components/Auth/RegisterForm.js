@@ -4,12 +4,13 @@ import {
   TextField, Button, Box, Typography, Checkbox, FormControlLabel,
   Link as MuiLink, Grid, IconButton, InputAdornment, Alert, CircularProgress
 } from '@mui/material';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import { register } from '../../services/authService';
 
 const RegisterForm = () => {
+  const navigate = useNavigate(); // Khởi tạo hook useNavigate
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -53,7 +54,7 @@ const RegisterForm = () => {
     if (!formData.confirmPassword) tempErrors.confirmPassword = "Xác nhận mật khẩu là bắt buộc.";
     else if (formData.password !== formData.confirmPassword) tempErrors.confirmPassword = "Mật khẩu không khớp.";
 
-    // Họ và Tên không còn là bắt buộc theo mẫu (không có dấu *)
+    // Họ và Tên không bắt buộc
     // if (!formData.lastName.trim()) tempErrors.lastName = "Họ và tên đệm là bắt buộc.";
     // if (!formData.firstName.trim()) tempErrors.firstName = "Tên là bắt buộc.";
 
@@ -76,10 +77,19 @@ const RegisterForm = () => {
           lastName: formData.lastName,
         };
         const response = await register(payload);
-        setApiMessage({ type: 'success', text: response.message || "Đăng ký thành công. Vui lòng kiểm tra email." });
+        // Không setApiMessage ở đây nữa nếu muốn chuyển hướng
+        // setApiMessage({ type: 'success', text: response.message || "Đăng ký thành công. Vui lòng kiểm tra email." });
+
+        // Reset form và lỗi client-side (vẫn nên làm)
         setFormData({ firstName: '', lastName: '', email: '', password: '', confirmPassword: '', agreedToTerms: false });
         setErrors({});
+
+        // Chuyển hướng đến trang yêu cầu xác thực email
+        navigate('/please-verify-email', { state: { email: payload.email } }); // << THAY ĐỔI Ở ĐÂY
+        // Truyền email qua state để trang PleaseVerifyEmailPage có thể hiển thị nếu cần
+
         // setTimeout(() => navigate('/login'), 3000);
+
       } catch (error) {
         if (error.response && error.response.data) {
             const errorData = error.response.data;

@@ -55,7 +55,7 @@ const RegisterPage = () => {
               component="button"
               variant="body2"
               onClick={() => alert('Cần trợ giúp? clicked!')}
-              sx={{ textDecoration: 'none', color: 'text.secondary', fontWeight: 500, fontSize: '0.875rem' }}
+              sx={{ textDecoration: 'none', color: 'text.secondary', fontWeight: 600, fontSize: '0.875rem' }}
             >
               Cần trợ giúp?
             </MuiLink>
