@@ -5,7 +5,7 @@ import './index.css'; // File này có thể trống hoặc chứa global reset/
 import App from './App';
 import { ThemeProvider } from '@mui/material/styles'; // Import ThemeProvider
 import CssBaseline from '@mui/material/CssBaseline'; // Để chuẩn hóa CSS
-import theme from './theme/theme'; // Import theme bạn vừa tạo
+import theme from './theme/theme'; // Import theme vừa tạo
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(

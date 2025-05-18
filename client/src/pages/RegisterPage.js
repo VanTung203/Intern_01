@@ -1,10 +1,8 @@
 // client/src/pages/RegisterPage.js
 import React from 'react';
-// Imports cho nội dung cụ thể của trang này
 import { Box, Typography, Link as MuiLink, Paper } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import RegisterForm from '../components/Auth/RegisterForm';
-// Import Layout chung
 import PublicPageLayout from '../components/layouts/PublicPageLayout';
 
 // --- Component chứa nội dung CỤ THỂ của cột phải cho TRANG ĐĂNG KÝ ---

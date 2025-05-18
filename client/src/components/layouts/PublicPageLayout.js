@@ -75,19 +75,19 @@ const PublicPageLayout = ({ children }) => {
         <Grid
           item
           xs={false} // Ẩn trên màn hình rất nhỏ
-          sm={6}   // Chiếm nửa màn hình từ sm
-          md={6}   // Chiếm 7/12 từ md
-          lg={6}
+          sm={3}   // Chiếm 3/12
+          md={3}   
+          lg={3}
           sx={{
             display: { xs: 'none', sm: 'flex' }, // Chỉ hiển thị từ sm trở lên
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            p: { sm: 3, md: 6, lg: 8 },
+            p: { xs:2, sm: 3, md: 6, lg: 8 },
             backgroundColor: '#F9FAFB', // Màu nền xám nhạt
           }}
         >
-          <Box sx={{ maxWidth: 350, textAlign: 'center' }}> {/* Điều chỉnh maxWidth nếu cần */}
+          <Box sx={{ maxWidth: 330, textAlign: 'center' }}> {/* Điều chỉnh maxWidth nếu cần */}
             <Typography component="h1" variant="h3" sx={{ fontWeight: 700, mb: 1.5, color: 'text.primary' }}>
               Vietbando, Xin Chào!
             </Typography>
@@ -102,9 +102,9 @@ const PublicPageLayout = ({ children }) => {
         <Grid
           item
           xs={12} // Chiếm toàn bộ trên xs (khi cột trái ẩn)
-          sm={6}
-          md={6}
-          lg={6}
+          sm={9}
+          md={9}
+          lg={9}
           // Không dùng component={Paper} ở đây nữa, để trang con tự quyết định
           sx={{
             display: 'flex',

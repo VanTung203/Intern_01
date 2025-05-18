@@ -8,13 +8,13 @@ import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import { login } from '../../services/authService'; // Import hàm login
-// Giả sử bạn có hàm setAuthHeader trong authService để cập nhật axios instance
+// Giả sử có hàm setAuthHeader trong authService để cập nhật axios instance
 import { setAuthHeader } from '../../services/authService';
 
 
 // // Hàm helper render TextField với label nổi (có thể tách ra file riêng nếu dùng ở nhiều form)
 // const renderFloatingLabelTextField = ({ /* ... props như trong RegisterForm ... */ }) => ( /* ... JSX của hàm helper ... */ );
-// // HOẶC, nếu bạn muốn label mặc định của TextField (nằm trong ô khi rỗng, nổi lên khi focus/có giá trị)
+// // HOẶC, nếu muốn label mặc định của TextField (nằm trong ô khi rỗng, nổi lên khi focus/có giá trị)
 // // thì không cần hàm helper này và dùng TextField với prop `label` trực tiếp.
 // // Để giống mẫu "vietbando" cho Login, có vẻ label nằm bên trong.
 
@@ -85,8 +85,7 @@ const LoginForm = () => {
 
 
   // --- Tái sử dụng hàm renderFloatingLabelTextField từ RegisterForm.js ---
-  // Hoặc bạn có thể định nghĩa lại ở đây, hoặc import từ một file utils chung
-  // Để đơn giản, tôi sẽ giả định bạn copy hàm đó vào đây hoặc import
+  // Hoặc có thể định nghĩa lại ở đây, hoặc import từ một file utils chung
   const renderFloatingLabelTextFieldInternal = ({
     name,
     labelText, // Sẽ là prop label của TextField nếu không dùng label nổi tùy chỉnh
@@ -168,7 +167,7 @@ const LoginForm = () => {
             variant="caption" // Hoặc body2
             sx={{
                 position: 'absolute',
-                top: '-9px', // Căn chỉnh cho thẳng hàng với label "Mật khẩu"
+                top: '-15px', // Căn chỉnh cho thẳng hàng với label "Mật khẩu"
                 right: '12px', // Đặt ở bên phải
                 zIndex: 1, // Đảm bảo nằm trên
                 fontWeight: 500,

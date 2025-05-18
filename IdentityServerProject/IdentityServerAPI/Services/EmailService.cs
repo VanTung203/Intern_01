@@ -31,10 +31,10 @@ namespace IdentityServerAPI.Services
         public async Task SendEmailAsync(string toEmail, string subject, string message)
         {
             var email = new MimeMessage();
-            email.From.Add(new MailboxAddress("Admin", _emailSettings.SenderEmail)); // Bạn có thể muốn tên "Admin" này cũng là cấu hình
+            email.From.Add(new MailboxAddress("Admin", _emailSettings.SenderEmail)); // Có thể muốn tên "Admin" này cũng là cấu hình
             email.To.Add(new MailboxAddress("", toEmail)); // Tên người nhận có thể để trống hoặc lấy từ đâu đó
             email.Subject = subject;
-            email.Body = new TextPart(MimeKit.Text.TextFormat.Html) { Text = message }; // Thay đổi thành Html nếu message của bạn có HTML
+            email.Body = new TextPart(MimeKit.Text.TextFormat.Html) { Text = message }; // Thay đổi thành Html nếu message của có HTML
 
             using var smtp = new SmtpClient();
             try

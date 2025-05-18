@@ -44,7 +44,7 @@ const PleaseVerifyEmailPageContent = () => {
                 maxWidth: 750,  // Giới hạn chiều rộng nội dung
             }}
         >
-            {/* Sử dụng icon hộp thư từ hình ảnh mẫu của bạn */}
+            {/* Sử dụng hình ảnh hộp thư*/}
             <img
                 src={`${process.env.PUBLIC_URL}/verify_email.png`}
                 alt="Email Sent"
@@ -68,7 +68,7 @@ const PleaseVerifyEmailPageContent = () => {
                 variant="outlined" // Giữ variant="outlined" để có viền
                 startIcon={<LoopIcon sx={{ fontSize: '1.0rem', mr: 0.5 }} />} // Điều chỉnh icon một chút cho cân đối
                 onClick={handleResendEmail} // Giả sử hàm này đã được định nghĩa
-                // disabled={!canResend || isLoading} // Bạn có thể thêm logic disabled ở đây nếu cần
+                // disabled={!canResend || isLoading} // có thể thêm logic disabled ở đây nếu cần
                 sx={(theme) => ({ // Truy cập theme để lấy màu xám
                     textTransform: 'none',
                     color: theme.palette.text.secondary, // Màu chữ xám (có thể là GREY[600])

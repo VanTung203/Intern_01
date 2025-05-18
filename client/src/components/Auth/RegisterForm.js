@@ -58,7 +58,7 @@ const RegisterForm = () => {
     // if (!formData.lastName.trim()) tempErrors.lastName = "Họ và tên đệm là bắt buộc.";
     // if (!formData.firstName.trim()) tempErrors.firstName = "Tên là bắt buộc.";
 
-    if (!formData.agreedToTerms) tempErrors.agreedToTerms = "Bạn phải đồng ý với điều khoản dịch vụ.";
+    if (!formData.agreedToTerms) tempErrors.agreedToTerms = " phải đồng ý với điều khoản dịch vụ.";
     setErrors(tempErrors);
     return Object.keys(tempErrors).length === 0;
   };

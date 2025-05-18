@@ -1,7 +1,7 @@
 // client/src/theme/theme.js
 import { createTheme, alpha } from '@mui/material/styles';
 
-// Đảm bảo bạn đã import font Public Sans vào public/index.html
+// Đảm bảo đã import font Public Sans vào public/index.html
 // <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 const FONT_FAMILY = '"Public Sans", sans-serif';
 
