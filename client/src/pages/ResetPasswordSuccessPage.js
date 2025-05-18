@@ -25,7 +25,7 @@ const ResetPasswordSuccessPageContent = () => {
                 textAlign: 'center',
                 backgroundColor: 'transparent',
                 width: '100%',
-                maxWidth: 650,
+                maxWidth: 650
             }}
         >
             <CheckCircleOutlineIcon sx={{ fontSize: 60, color: 'success.main', mb: 2 }} />

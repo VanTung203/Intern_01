@@ -46,7 +46,19 @@ const ResetPasswordPageContent = () => {
 const ResetPasswordPage = () => {
   return (
     <PublicPageLayout>
-      <Paper elevation={0} square sx={{p:0, backgroundColor: 'transparent', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <Paper 
+            elevation={0} 
+            square 
+            sx={{
+                p:0,
+                pl: { xs: 2.5, sm: 6, md: 8, lg: 35 },
+                backgroundColor: 'transparent', 
+                width: '100%', 
+                display: 'flex', 
+                justifyContent: 'center', 
+                alignItems: 'center' 
+            }}
+        >
         <ResetPasswordPageContent />
       </Paper>
     </PublicPageLayout>
