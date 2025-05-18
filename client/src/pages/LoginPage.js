@@ -38,7 +38,7 @@ const LoginPage = () => {
         square 
         sx={{ 
             p:0,
-            pl: { xs: 2.5, sm: 6, md: 8, lg: 45 },
+            pl: { xs: 2.5, sm: 6, md: 8, lg: 40 },
             backgroundColor: 'transparent', 
             width: '100%', 
             display: 'flex',
