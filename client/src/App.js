@@ -1,40 +1,92 @@
 // client/src/App.js
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import React, { useEffect } from 'react'; // Thêm useEffect
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+
+// Layouts
+import PublicPageLayout from './components/layouts/PublicPageLayout';
+import DashboardLayout from './components/layouts/DashboardLayout';
+
+// Public Pages
 import RegisterPage from './pages/RegisterPage';
-import LoginPage from './pages/LoginPage'; // Đảm bảo component này đã được tạo và hoạt động
+import LoginPage from './pages/LoginPage';
 import PleaseVerifyEmailPage from './pages/PleaseVerifyEmailPage';
 import EmailConfirmedPage from './pages/EmailConfirmedPage';
-import ForgotPasswordPage from './pages/ForgotPasswordPage'; // Trang mới
-import ForgotPasswordEmailSentPage from './pages/ForgotPasswordEmailSentPage'; // Trang mới
-import ResetPasswordPage from './pages/ResetPasswordPage'; // Trang mới
-import ResetPasswordSuccessPage from './pages/ResetPasswordSuccessPage'; // Trang mới
-import Typography from '@mui/material/Typography';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ForgotPasswordEmailSentPage from './pages/ForgotPasswordEmailSentPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
+import ResetPasswordSuccessPage from './pages/ResetPasswordSuccessPage';
+
+// Private Pages
+import UserProfilePage from './pages/UserProfilePage';
+import UserProfileInfoForm from './components/User/UserProfileInfoForm';
+import UserSecurityContent from './components/User/UserSecurityContent';
+
+import { Typography, Box } from '@mui/material'; // << THÊM Box VÀO ĐÂY
+
+// Giả sử bạn đã tạo apiClient.js và setGlobalAuthHeader như đã thảo luận
+// Nếu không, bạn sẽ cần import setAuthHeader từ cả authService và userService
+import { setGlobalAuthHeader } from './api/apiClient'; // HOẶC import từ authService và userService
+
+// Component bảo vệ Route
+const PrivateRoute = ({ children }) => {
+  const token = localStorage.getItem('authToken');
+  // Có thể thêm logic kiểm tra token hết hạn ở đây nếu cần
+  return token ? children : <Navigate to="/login" replace />;
+};
 
 function App() {
+  // useEffect để thiết lập header xác thực khi ứng dụng tải lần đầu
+  useEffect(() => {
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      setGlobalAuthHeader(token); // Gọi hàm để set header cho apiClient toàn cục
+      // Nếu bạn không dùng apiClient chung:
+      // import { setAuthHeader as setAuthServiceHeader } from './services/authService';
+      // import { setUserAuthHeader as setUserServiceHeader } from './services/userService';
+      // setAuthServiceHeader(token);
+      // setUserServiceHeader(token);
+    }
+  }, []); // Mảng rỗng đảm bảo useEffect này chỉ chạy một lần khi component App mount
+
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<RegisterPage />} />
+        {/* Public Routes: Không cần DashboardLayout, có thể có PublicPageLayout nếu RegisterPage không tự chứa layout */}
+        {/* Nếu RegisterPage và LoginPage đã dùng PublicPageLayout bên trong chúng thì không cần bọc ở đây */}
         <Route path="/register" element={<RegisterPage />} />
-        <Route path="/login" element={<LoginPage />} /> {/* Sử dụng LoginPage thật */}
+        <Route path="/login" element={<LoginPage />} />
         <Route path="/please-verify-email" element={<PleaseVerifyEmailPage />} />
         <Route path="/email-confirmed" element={<EmailConfirmedPage />} />
-
-        {/* Routes cho Quên mật khẩu */}
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/forgot-password-email-sent" element={<ForgotPasswordEmailSentPage />} />
-        {/* Backend gửi token trong email, user sẽ nhập token và email ở trang reset này */}
         <Route path="/reset-password" element={<ResetPasswordPage />} />
-        {/* Bạn có thể thêm path variable cho token nếu backend gửi link reset có token:
-            <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
-            Hoặc nếu token và email là query params:
-            <Route path="/reset-password" element={<ResetPasswordPage />} />
-            Hiện tại, theo backend, người dùng sẽ tự nhập token.
-        */}
         <Route path="/reset-password-success" element={<ResetPasswordSuccessPage />} />
 
-        <Route path="*" element={<Typography variant="h3" sx={{ textAlign: 'center', mt: 5 }}>404 Page Not Found</Typography>} />
+        {/* Private Routes using DashboardLayout */}
+        {/* Cách tiếp cận 1: Bọc DashboardLayout bằng PrivateRoute */}
+        <Route element={<PrivateRoute><DashboardLayout /></PrivateRoute>}>
+          <Route path="/profile" element={<UserProfilePage />}> {/* UserProfilePage sẽ chứa <Outlet/> cho các tab con */}
+            <Route index element={<Navigate to="info" replace />} />
+            <Route path="info" element={<UserProfileInfoForm />} />
+            <Route path="security" element={<UserSecurityContent />} />
+          </Route>
+          {/* Ví dụ một trang dashboard khác */}
+          {/* <Route path="/dashboard" element={<DashboardHomePage />} /> */}
+        </Route>
+
+        {/* Route mặc định */}
+        <Route path="/" element={<Navigate to="/login" replace />} />
+
+        {/* Trang 404 */}
+        <Route path="*" element={
+          <PublicPageLayout> {/* Có thể bọc trang 404 bằng layout chung */}
+            <Box sx={{textAlign: 'center', py: 5}}>
+              <Typography variant="h3">404</Typography>
+              <Typography variant="h6">Page Not Found</Typography>
+              <Typography sx={{mt:2}}>Xin lỗi, chúng tôi không tìm thấy trang bạn yêu cầu.</Typography>
+            </Box>
+          </PublicPageLayout>
+        } />
       </Routes>
     </Router>
   );

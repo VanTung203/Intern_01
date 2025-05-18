@@ -65,7 +65,7 @@ const LoginForm = () => {
         // Ví dụ: authContext.login(response.user, response.token);
 
         setTimeout(() => {
-            navigate('/dashboard'); // Hoặc trang chính sau khi đăng nhập
+            navigate('/profile'); // Hoặc trang chính sau khi đăng nhập
         }, 1500);
 
       } catch (error) {
