@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc; // Cần cho IActionResult hoặc các kiểu trả về tương tự
 using IdentityServerAPI.DTOs; 
 using System.Threading.Tasks;
+using System.Security.Claims; // << THÊM DÒNG NÀY
 
 namespace IdentityServerAPI.Services.Interfaces
 {
@@ -13,5 +14,6 @@ namespace IdentityServerAPI.Services.Interfaces
         Task<IActionResult> LoginUserAsync(LoginDto model);
         Task<IActionResult> ForgotPasswordAsync(ForgotPasswordDto model);
         Task<IActionResult> ResetUserPasswordAsync(ResetPasswordDto model);
+        Task<IActionResult> ChangeUserPasswordAsync(ClaimsPrincipal userPrincipal, ChangePasswordDto model);
     }
 }

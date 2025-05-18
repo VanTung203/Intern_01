@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using IdentityServerAPI.Models;
-using IdentityServerAPI.DTOs; // Hoặc IdentityServerAPI.DTOs.Auth
+using IdentityServerAPI.DTOs;
 using IdentityServerAPI.Services.Interfaces;
 using IdentityServerAPI.Configuration; // Cho JwtSettings
 using System;
@@ -178,6 +178,25 @@ namespace IdentityServerAPI.Services
             }
 
             return new OkObjectResult(new { message = "Đặt lại mật khẩu thành công. Bạn có thể đăng nhập bằng mật khẩu mới." });
+        }
+
+        public async Task<IActionResult> ChangeUserPasswordAsync(ClaimsPrincipal userPrincipal, ChangePasswordDto model)
+        {
+            var user = await _userManager.GetUserAsync(userPrincipal);
+            if (user == null)
+            {
+                // Điều này không nên xảy ra nếu user đã được xác thực
+                return new UnauthorizedObjectResult(new { message = "Người dùng không hợp lệ." });
+            }
+
+            var changePasswordResult = await _userManager.ChangePasswordAsync(user, model.CurrentPassword, model.NewPassword);
+            if (!changePasswordResult.Succeeded)
+            {
+                var errors = changePasswordResult.Errors.Select(e => new { code = e.Code, description = e.Description });
+                return new BadRequestObjectResult(new { title = "Đổi mật khẩu thất bại", errors = errors });
+            }
+
+            return new OkObjectResult(new { message = "Mật khẩu đã được thay đổi thành công." });
         }
     }
 }

@@ -1,66 +1,72 @@
 // IdentityServerAPI/Controllers/AuthController.cs
 using Microsoft.AspNetCore.Mvc;
-using IdentityServerAPI.DTOs; // Hoặc IdentityServerAPI.DTOs.Auth
-using IdentityServerAPI.Services.Interfaces; // Import IAuthService
+using IdentityServerAPI.DTOs;
+using IdentityServerAPI.Services.Interfaces;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration; // Đã có
+using Microsoft.AspNetCore.Authorization; // Đã có
 
 namespace IdentityServerAPI.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/[controller]")] // Route cơ sở là /api/Auth
     [ApiController]
     public class AuthController : ControllerBase
     {
-        private readonly IAuthService _authService; // Sử dụng IAuthService
-        private readonly IConfiguration _configuration; // Trường đã được khai báo
-        
-        public AuthController(IAuthService authService, IConfiguration configuration) // Inject IAuthService và IConfiguration
+        private readonly IAuthService _authService;
+        private readonly IConfiguration _configuration; // Giữ lại IConfiguration nếu AuthService không tự xử lý hết việc đọc config
+
+        public AuthController(IAuthService authService, IConfiguration configuration)
         {
             _authService = authService;
-            _configuration = configuration; // Gán IConfiguration được inject vào trường _configuration
+            _configuration = configuration; // Giữ lại nếu ConfirmEmail vẫn cần đọc config trực tiếp ở đây
         }
 
-        [HttpPost("register")]
+        [HttpPost("register")] // POST /api/Auth/register
         public async Task<IActionResult> Register([FromBody] RegisterDto model)
         {
-            if (!ModelState.IsValid) // Model validation cơ bản bằng attributes trên DTO
+            if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
-            // Truyền Url helper và Request.Scheme để AuthService có thể tạo link
+            // Url và Request.Scheme được truyền để AuthService có thể tạo callback URL đúng
             return await _authService.RegisterUserAsync(model, Url, Request.Scheme);
         }
 
-        [HttpGet("confirmemail")]
+        [HttpGet("confirmemail")] // GET /api/Auth/confirmemail?userId=...&token=...
         public async Task<IActionResult> ConfirmEmail(string userId, string token)
         {
             // Lấy URL của trang "xác thực email thành công" trên frontend từ configuration
-            var frontendConfirmedUrl = _configuration["FrontendEmailConfirmedUrl"];
+            // AuthService đã xử lý việc này, nhưng nếu bạn muốn AuthController quyết định URL cuối cùng
+            // thì có thể giữ logic đọc config ở đây và truyền vào service.
+            // Tuy nhiên, để Controller mỏng hơn, AuthService nên tự lấy config này nếu cần.
+            // Giả sử AuthService đã được cập nhật để tự lấy FrontendEmailConfirmedUrl từ IConfiguration.
+            // Nếu không, bạn cần truyền nó vào như cũ:
+            string? frontendConfirmedUrl = _configuration["FrontendEmailConfirmedUrl"];
             if (string.IsNullOrEmpty(frontendConfirmedUrl))
             {
-                // Log lỗi hoặc sử dụng một URL mặc định an toàn
-                frontendConfirmedUrl = "http://localhost:3000/login"; // Mặc định về login nếu không có config
-                // Hoặc throw exception nếu đây là cấu hình bắt buộc
+                // _logger.LogWarning("FrontendEmailConfirmedUrl is not configured..."); // Nếu có logger
+                frontendConfirmedUrl = "http://localhost:3000/login"; // Default fallback
             }
 
             var result = await _authService.ConfirmUserEmailAsync(userId, token, frontendConfirmedUrl);
 
-            if (result is OkObjectResult okResult && okResult.Value is { } value)
+            // Xử lý kết quả từ service để thực hiện redirect
+            if (result is OkObjectResult okResult && okResult.Value != null)
             {
-                var redirectToProperty = value.GetType().GetProperty("redirectTo");
-                if (redirectToProperty != null)
+                // Thử lấy thuộc tính 'redirectTo' từ đối tượng trả về
+                var valueType = okResult.Value.GetType();
+                var redirectToProperty = valueType.GetProperty("redirectTo");
+
+                if (redirectToProperty != null && redirectToProperty.GetValue(okResult.Value) is string redirectTo && !string.IsNullOrEmpty(redirectTo))
                 {
-                var redirectTo = redirectToProperty.GetValue(value) as string;
-                    if (!string.IsNullOrEmpty(redirectTo))
-                    {
-                        return Redirect(redirectTo); // Backend sẽ redirect trình duyệt đến frontendConfirmedUrl
-                    }
+                    return Redirect(redirectTo); // Redirect phía server đến URL của frontend
                 }
             }
-            return BadRequest("Xác minh email thất bại hoặc có lỗi xảy ra."); // Hoặc trả về một trang lỗi của frontend
+            // Nếu không có redirectTo hoặc service trả về lỗi, trả về kết quả của service
+            return result;
         }
 
-        [HttpPost("login")]
+        [HttpPost("login")] // POST /api/Auth/login
         public async Task<IActionResult> Login([FromBody] LoginDto model)
         {
             if (!ModelState.IsValid)
@@ -70,7 +76,7 @@ namespace IdentityServerAPI.Controllers
             return await _authService.LoginUserAsync(model);
         }
 
-        [HttpPost("forgot-password")]
+        [HttpPost("forgot-password")] // POST /api/Auth/forgot-password
         public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto model)
         {
             if (!ModelState.IsValid)
@@ -80,7 +86,7 @@ namespace IdentityServerAPI.Controllers
             return await _authService.ForgotPasswordAsync(model);
         }
 
-        [HttpPost("reset-password")]
+        [HttpPost("reset-password")] // POST /api/Auth/reset-password
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto model)
         {
             if (!ModelState.IsValid)
@@ -89,5 +95,20 @@ namespace IdentityServerAPI.Controllers
             }
             return await _authService.ResetUserPasswordAsync(model);
         }
+
+        // --- THÊM ENDPOINT MỚI CHO ĐỔI MẬT KHẨU ---
+        [Authorize] // Yêu cầu người dùng phải đăng nhập (có JWT token hợp lệ)
+        [HttpPost("change-password")] // POST /api/Auth/change-password
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            // User (ClaimsPrincipal) được tự động gán vào ControllerBase.User từ JWT token
+            // sau khi middleware UseAuthentication xử lý.
+            return await _authService.ChangeUserPasswordAsync(User, model);
+        }
+        // ---------------------------------------------
     }
 }
