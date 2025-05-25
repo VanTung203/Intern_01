@@ -38,7 +38,7 @@ const renderFloatingLabelTextField = ({
         px: '5px',
         fontSize: '11.5px',
         color: error ? 'error.main' : 'text.secondary',
-        fontWeight: 500,
+        fontWeight: 100,
         zIndex: 1,
       }}
     >
