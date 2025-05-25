@@ -196,7 +196,7 @@ const UserProfileInfoForm = () => {
     }
 
     return (
-        <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', height: '100%' /* Để form chiếm hết chiều cao card */ }}>
+        <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', height: '100%', width:400 /* Để form chiếm hết chiều cao card */ }}>
             {/* Input file ẩn, AvatarCard sẽ trigger nó nếu cần, hoặc bạn tạo 1 nút riêng trong UserProfileInfoForm nếu không muốn click avatar để tải */}
             <input type="file" hidden accept=".jpeg,.jpg,.png,.gif" onChange={handleAvatarFileChange} ref={fileInputRef}/>
 
