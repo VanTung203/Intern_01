@@ -1,9 +1,9 @@
 // client/src/pages/UserProfilePage.js
 import React from 'react';
-import { Box, Grid, Paper, Typography, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Breadcrumbs, Link as MuiLink, useTheme, Avatar, Button } from '@mui/material';
+import { Box, Paper, Typography, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Breadcrumbs, Link as MuiLink, useTheme, Avatar, Button } from '@mui/material';
 import { Link as RouterLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
-import VpnKeyOutlinedIcon from '@mui/icons-material/VpnKeyOutlined';
+import SecurityOutlinedIcon from '@mui/icons-material/SecurityOutlined';
 import AccountCircleOutlinedIcon from '@mui/icons-material/AccountCircleOutlined';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import { alpha } from '@mui/material/styles';
@@ -11,7 +11,7 @@ import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 
 const menuItems = [
     { text: 'Thông tin tài khoản', icon: <PersonOutlineIcon />, path: '/profile/info' },
-    { text: 'Bảo mật tài khoản', icon: <VpnKeyOutlinedIcon />, path: '/profile/security' },
+    { text: 'Bảo mật tài khoản', icon: <SecurityOutlinedIcon />, path: '/profile/security' },
 ];
 
 // Component Avatar Card
