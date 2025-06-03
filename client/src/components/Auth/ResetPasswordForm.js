@@ -1,12 +1,12 @@
 // client/src/components/Auth/ResetPasswordForm.js
-import React, { useState, useEffect } from 'react';
+import React, { useState } /* useEffect không dùng */ from 'react';
 import { TextField, Button, Box, Alert, CircularProgress, Typography, IconButton, InputAdornment } from '@mui/material';
-import { useNavigate, useLocation } from 'react-router-dom'; // Thêm useLocation
+import { useNavigate /* useLocation không dùng */ } from 'react-router-dom';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import { resetPassword } from '../../services/authService';
 
-// Hàm helper renderTextField (Bạn có thể tách ra file chung src/components/common/FloatingLabelTextField.js)
+// Hàm helper renderFloatingLabelTextField (giữ nguyên)
 const renderFloatingLabelTextField = ({
   name,
   labelText,
@@ -19,8 +19,8 @@ const renderFloatingLabelTextField = ({
   onChange,
   error,
   disabled,
-  InputProps, // Để truyền endAdornment cho icon mật khẩu
-  inputProps  // Để style bên trong input
+  InputProps,
+  inputProps
 }) => (
   <Box sx={{ position: 'relative', mb: 2.25 }}>
     <Typography
@@ -64,9 +64,10 @@ const renderFloatingLabelTextField = ({
 );
 
 
-const ResetPasswordForm = ({ emailToReset }) => { // Nhận emailToReset qua props
+const ResetPasswordForm = ({ emailToReset }) => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
+    // Giữ tên 'token' để khớp với DTO backend, nhưng nó sẽ chứa OTP
     token: '',
     newPassword: '',
     confirmNewPassword: '',
@@ -75,11 +76,18 @@ const ResetPasswordForm = ({ emailToReset }) => { // Nhận emailToReset qua pro
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [apiMessage, setApiMessage] = useState(null); // { type, text, details? }
+  const [apiMessage, setApiMessage] = useState(null);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prevData => ({ ...prevData, [name]: value }));
+    // Nếu là trường OTP, chỉ cho phép nhập số và giới hạn 6 ký tự
+    if (name === "token") {
+        const numericValue = value.replace(/\D/g, ''); // Chỉ giữ lại số
+        setFormData(prevData => ({ ...prevData, [name]: numericValue.slice(0, 6) })); // Giới hạn 6 ký tự
+    } else {
+        setFormData(prevData => ({ ...prevData, [name]: value }));
+    }
+
     if (errors[name]) {
       setErrors(prevErrors => ({ ...prevErrors, [name]: '' }));
     }
@@ -92,7 +100,12 @@ const ResetPasswordForm = ({ emailToReset }) => { // Nhận emailToReset qua pro
 
   const validate = () => {
     let tempErrors = {};
-    if (!formData.token.trim()) tempErrors.token = "Mã token là bắt buộc.";
+    // Thay đổi validate cho token (OTP)
+    if (!formData.token.trim()) tempErrors.token = "Mã OTP là bắt buộc.";
+    else if (formData.token.length !== 6) tempErrors.token = "Mã OTP phải có 6 chữ số.";
+    else if (!/^\d{6}$/.test(formData.token)) tempErrors.token = "Mã OTP chỉ được chứa chữ số.";
+
+
     if (!formData.newPassword) tempErrors.newPassword = "Mật khẩu mới là bắt buộc.";
     else if (formData.newPassword.length < 6) tempErrors.newPassword = "Mật khẩu mới phải có ít nhất 6 ký tự.";
     if (!formData.confirmNewPassword) tempErrors.confirmNewPassword = "Xác nhận mật khẩu mới là bắt buộc.";
@@ -114,19 +127,22 @@ const ResetPasswordForm = ({ emailToReset }) => { // Nhận emailToReset qua pro
       setIsLoading(true);
       try {
         const payload = {
-          email: emailToReset, // Sử dụng email được truyền vào
-          token: formData.token,
+          email: emailToReset,
+          token: formData.token, // Đây sẽ là OTP 6 số
           newPassword: formData.newPassword,
         };
-        const response = await resetPassword(payload); // API backend trả về { message: "..." }
+        const response = await resetPassword(payload);
 
-        // Chuyển hướng đến trang thành công, truyền message từ server
         navigate('/reset-password-success', { state: { message: response.message || "Mật khẩu đã được đặt lại thành công!" } });
 
       } catch (error) {
         const errorData = error.response?.data;
-        if (errorData?.errors && Array.isArray(errorData.errors)) {
-            setApiMessage({ type: 'error', text: errorData.title || 'Đặt lại mật khẩu thất bại.', details: errorData.errors.map(err => err.description || err.code) });
+        // Kiểm tra lỗi cụ thể từ backend nếu token không hợp lệ hoặc hết hạn
+        if (errorData?.message && (errorData.message.includes("OTP không hợp lệ") || errorData.message.includes("Invalid token"))) {
+            setApiMessage({ type: 'error', text: "Mã OTP không đúng hoặc đã hết hạn. Vui lòng thử lại." });
+            setErrors(prev => ({...prev, token: "Mã OTP không đúng hoặc đã hết hạn."})); // Highlight trường token
+        } else if (errorData?.errors && Array.isArray(errorData.errors)) {
+            setApiMessage({ type: 'error', text: errorData.title || 'Đặt lại mật khẩu thất bại.', details: errorData.errors }); // Gửi nguyên mảng errors
         } else if (errorData?.message) {
             setApiMessage({ type: 'error', text: errorData.message });
         } else if (typeof errorData === 'string') {
@@ -145,40 +161,51 @@ const ResetPasswordForm = ({ emailToReset }) => { // Nhận emailToReset qua pro
       {apiMessage && (
         <Alert severity={apiMessage.type} sx={{ mb: 2.5 }} onClose={() => {setApiMessage(null)}}>
           {apiMessage.text}
-          {apiMessage.details && apiMessage.details.length > 0 && (
+          {/* Sửa lại cách hiển thị details nếu nó là mảng string (description từ IdentityError) */}
+          {apiMessage.details && Array.isArray(apiMessage.details) && apiMessage.details.length > 0 && (
             <ul style={{ margin: '8px 0 0 0', paddingLeft: '20px', listStyleType: 'disc' }}>
               {apiMessage.details.map((detail, index) => (
-                <li key={index}><Typography variant="caption" component="span">{detail}</Typography></li>
+                <li key={index}><Typography variant="caption" component="span">{typeof detail === 'string' ? detail : (detail.description || detail.code || 'Lỗi không xác định')}</Typography></li>
               ))}
             </ul>
           )}
         </Alert>
       )}
 
+      {/* Thay đổi label và placeholder cho trường token/OTP */}
       {renderFloatingLabelTextField({
         name: "token",
-        labelText: "Mã Token",
-        placeholder: "Nhập mã token từ email",
+        labelText: "Mã OTP", // ĐỔI LABEL
+        placeholder: "Nhập mã OTP 6 số từ email", // ĐỔI PLACEHOLDER
         value: formData.token,
         onChange: handleChange,
         error: errors.token,
         disabled: isLoading,
-        autoFocus: true, // Focus vào trường token đầu tiên
-        isRequired: true
+        autoFocus: true,
+        isRequired: true,
+        autoComplete: "one-time-code", // Giúp trình duyệt gợi ý nếu có
+        // type: "tel", // Gợi ý bàn phím số trên mobile
+        inputProps: { // Giới hạn input client-side (server vẫn là nguồn chính)
+            maxLength: 6,
+            inputMode: "numeric", // Gợi ý bàn phím số
+            pattern: "[0-9]*", // Chỉ cho phép số (HTML5 validation)
+            style: { paddingTop: '12px', paddingBottom: '12px', fontSize: '14px' }
+        }
       })}
 
+      {/* Các trường mật khẩu giữ nguyên */}
       {renderFloatingLabelTextField({
         name: "newPassword",
         labelText: "Mật khẩu mới",
         placeholder: "Tối thiểu 6+ ký tự",
-        type: showNewPassword ? "text" : "password", // Sử dụng type riêng cho hàm helper
+        type: showNewPassword ? "text" : "password",
         autoComplete: "new-password",
         value: formData.newPassword,
         onChange: handleChange,
         error: errors.newPassword,
         disabled: isLoading,
         isRequired: true,
-        InputProps:{ // Truyền InputProps vào hàm helper
+        InputProps:{
           endAdornment: (
             <InputAdornment position="end">
               <IconButton
@@ -202,14 +229,14 @@ const ResetPasswordForm = ({ emailToReset }) => { // Nhận emailToReset qua pro
         name: "confirmNewPassword",
         labelText: "Xác nhận mật khẩu mới",
         placeholder: "Nhập lại mật khẩu mới",
-        type: showConfirmNewPassword ? "text" : "password", // Sử dụng type riêng
+        type: showConfirmNewPassword ? "text" : "password",
         autoComplete: "new-password",
         value: formData.confirmNewPassword,
         onChange: handleChange,
         error: errors.confirmNewPassword,
         disabled: isLoading,
         isRequired: true,
-        InputProps:{ // Truyền InputProps
+        InputProps:{
           endAdornment: (
             <InputAdornment position="end">
               <IconButton
@@ -233,7 +260,7 @@ const ResetPasswordForm = ({ emailToReset }) => { // Nhận emailToReset qua pro
         type="submit"
         fullWidth
         variant="contained"
-        disabled={isLoading || !emailToReset} // Disable nếu không có emailToReset
+        disabled={isLoading || !emailToReset}
         sx={{
           mt: 2,
           py: 1.25,

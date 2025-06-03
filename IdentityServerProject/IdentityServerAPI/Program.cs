@@ -8,10 +8,10 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using IdentityServerAPI.Models;
 using IdentityServerAPI.Configuration;
-using IdentityServerAPI.Repositories; // Quan trọng: Namespace cho CustomUserStore, CustomRoleStore
+// using IdentityServerAPI.Repositories;
 using IdentityServerAPI.Services;
-using IdentityServerAPI.Services.Interfaces;
-using Microsoft.OpenApi.Models; // Cho OpenApiInfo và các lớp liên quan đến Swagger
+using IdentityServerAPI.Services.Interfaces; // Đã có
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -42,11 +42,9 @@ builder.Services.AddSingleton<IMongoDatabase>(sp =>
     return client.GetDatabase(settings.DatabaseName);
 });
 
-// --- 3. Đăng ký UserStore và RoleStore với namespace mới ---
-// Giả sử bạn đã đổi tên class thành CustomUserStore và CustomRoleStore
-// và chúng nằm trong namespace IdentityServerAPI.Repositories
-builder.Services.AddScoped<IUserStore<ApplicationUser>, UserStore>();
-builder.Services.AddScoped<IRoleStore<ApplicationRole>, RoleStore>();
+// // --- 3. Đăng ký UserStore và RoleStore ---
+// builder.Services.AddScoped<IUserStore<ApplicationUser>, UserStore>();
+// builder.Services.AddScoped<IRoleStore<ApplicationRole>, RoleStore>();
 
 // --- 4. Cấu hình ASP.NET Core Identity ---
 builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
@@ -57,16 +55,26 @@ builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
         options.Password.RequireNonAlphanumeric = false;
         options.Password.RequiredLength = 6;
         options.SignIn.RequireConfirmedEmail = true;
-        // options.User.RequireUniqueEmail = true; // Cân nhắc bật tùy chọn này
+        // options.User.RequireUniqueEmail = true;
+
+        // >>> THAY ĐỔI QUAN TRỌNG: SỬ DỤNG EMAILTOKENPROVIDER CHO RESET MẬT KHẨU <<<
+        // EmailTokenProvider sẽ tạo ra mã OTP 6 số.
+        options.Tokens.PasswordResetTokenProvider = TokenOptions.DefaultEmailProvider; // "Email"
+        // Mặc định, token từ EmailTokenProvider (là một dạng TOTP) có thời gian sống ngắn (khoảng 3 phút).
+        // Điều này phù hợp với OTP.
     })
-    .AddDefaultTokenProviders();
+    .AddMongoDbStores<ApplicationUser, ApplicationRole, Guid>(
+        builder.Configuration.GetValue<string>("MongoSettings:ConnectionString"),
+        builder.Configuration.GetValue<string>("MongoSettings:DatabaseName") // Lấy tên DB từ cấu hình
+    )
+    .AddDefaultTokenProviders(); // Đảm bảo dòng này vẫn còn. Nó đăng ký EmailTokenProvider với tên "Email".
 
 // --- 5. Đăng ký các Services ---
 builder.Services.AddScoped<IEmailService, EmailService>();
-builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IAuthService, AuthService>(); // AuthService là nơi logic chính
 builder.Services.AddScoped<IUserService, UserService>();
 
-// --- 6. Cấu hình JWT Authentication ---
+// --- 6. Cấu hình JWT Authentication (Giữ nguyên) ---
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -92,18 +100,18 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// --- Thêm các dịch vụ cần thiết khác ---
+// --- Thêm các dịch vụ cần thiết khác (Giữ nguyên) ---
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "IdentityServerAPI", Version = "v1" }); // Sử dụng OpenApiInfo đầy đủ
-    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme // Sử dụng OpenApiSecurityScheme đầy đủ
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "IdentityServerAPI", Version = "v1" });
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Description = "JWT Authorization header using the Bearer scheme. Example: \"Bearer {token}\"",
         Name = "Authorization",
-        In = ParameterLocation.Header, // Sử dụng ParameterLocation đầy đủ
-        Type = SecuritySchemeType.ApiKey, // Sử dụng SecuritySchemeType đầy đủ
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.ApiKey,
         Scheme = "Bearer"
     });
     c.AddSecurityRequirement(new OpenApiSecurityRequirement()
@@ -111,12 +119,12 @@ builder.Services.AddSwaggerGen(c =>
         {
             new OpenApiSecurityScheme
             {
-                Reference = new OpenApiReference // Sử dụng OpenApiReference đầy đủ
+                Reference = new OpenApiReference
                 {
-                    Type = ReferenceType.SecurityScheme, // Sử dụng ReferenceType đầy đủ
+                    Type = ReferenceType.SecurityScheme,
                     Id = "Bearer"
                 },
-                Scheme = "oauth2", // scheme có thể là "oauth2" hoặc giữ "Bearer"
+                Scheme = "oauth2",
                 Name = "Bearer",
                 In = ParameterLocation.Header,
             },
@@ -125,7 +133,7 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// Cấu hình CORS
+// Cấu hình CORS (Giữ nguyên)
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontendOrigin",
@@ -138,13 +146,13 @@ builder.Services.AddCors(options =>
         });
 });
 
-// Cấu hình Kestrel
+// Cấu hình Kestrel (Giữ nguyên)
 builder.WebHost.ConfigureKestrel(options =>
 {
     var httpPortEnv = Environment.GetEnvironmentVariable("ASPNETCORE_HTTP_PORTS");
     var httpsPortEnv = Environment.GetEnvironmentVariable("ASPNETCORE_HTTPS_PORTS");
     int httpPort = 5116;
-    int httpsPort = 7289; // Port HTTPS từ launchSettings mặc định của bạn
+    int httpsPort = 7289;
 
     if (!string.IsNullOrEmpty(httpPortEnv) && int.TryParse(httpPortEnv, out int parsedHttpPort))
     {
@@ -163,35 +171,23 @@ builder.WebHost.ConfigureKestrel(options =>
 
 var app = builder.Build();
 
-// --- Configure the HTTP request pipeline. ---
+// --- Configure the HTTP request pipeline (Giữ nguyên) ---
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "IdentityServerAPI v1"));
     app.UseDeveloperExceptionPage();
-    // KHÔNG gọi UseHttpsRedirection ở đây nếu frontend dev chạy HTTP và gặp lỗi CORS
 }
 else
 {
-    // app.UseExceptionHandler("/Error"); // Cân nhắc thêm trang lỗi chung cho production
     app.UseHsts();
-    app.UseHttpsRedirection(); // BẮT BUỘC cho môi trường không phải Development
+    app.UseHttpsRedirection();
 }
 
-// Dòng app.UseHttpsRedirection(); ở đây không còn cần thiết nếu đã xử lý trong if/else
-// app.UseHttpsRedirection();
-
-// >>> THÊM DÒNG NÀY ĐỂ PHỤC VỤ FILE TĨNH TỪ THƯ MỤC WWWROOT (BAO GỒM AVATARS) <<<
 app.UseStaticFiles();
-// >>> KẾT THÚC PHẦN THÊM <<<
-
 app.UseRouting();
-
-app.UseCors("AllowFrontendOrigin"); // Áp dụng CORS policy
-
-app.UseAuthentication(); // Đảm bảo UseAuthentication được gọi trước UseAuthorization
+app.UseCors("AllowFrontendOrigin");
+app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
-
 app.Run();

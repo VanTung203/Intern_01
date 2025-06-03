@@ -1,7 +1,12 @@
-using Microsoft.AspNetCore.Identity;
-using System;
+// IdentityServerAPI/Models/ApplicationRole.cs
+using AspNetCore.Identity.MongoDbCore.Models; // THÊM USING NÀY
+using System; // Cho Guid
 
 namespace IdentityServerAPI.Models
 {
-    public class ApplicationRole : IdentityRole<Guid> { }
+    // SỬA ĐỔI: Kế thừa từ MongoIdentityRole và sử dụng Guid làm kiểu khóa
+    public class ApplicationRole : MongoIdentityRole<Guid>
+    {
+        // Thêm các thuộc tính tùy chỉnh cho Role
+    }
 }

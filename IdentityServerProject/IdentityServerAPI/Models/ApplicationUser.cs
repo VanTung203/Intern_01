@@ -1,25 +1,20 @@
 // IdentityServerAPI/Models/ApplicationUser.cs
-using Microsoft.AspNetCore.Identity;
-using System;
+using AspNetCore.Identity.MongoDbCore.Models; // THÊM USING NÀY
+using System; // Cho Guid
 
 namespace IdentityServerAPI.Models
 {
-    public class ApplicationUser : IdentityUser<Guid> // Giữ nguyên Id kiểu Guid nếu bạn đã dùng
+    // SỬA ĐỔI: Kế thừa từ MongoIdentityUser và sử dụng Guid làm kiểu khóa
+    public class ApplicationUser : MongoIdentityUser<Guid>
     {
         public string FirstName { get; set; } = string.Empty;
         public string LastName { get; set; } = string.Empty;
-        // Bỏ FullName nếu bạn đã quyết định ghép từ FirstName và LastName khi cần
-        // public string FullName { get; set; } = string.Empty;
-
-        // THÊM CÁC TRƯỜNG MỚI
-        public string? AvatarUrl { get; set; } // Đường dẫn tới ảnh avatar đã lưu
-        // public string? PhoneNumber { get; set; } // Số điện thoại (nullable)
-        public string? Province { get; set; }    // Tỉnh/Thành phố (nullable)
-        public string? District { get; set; }    // Quận/Huyện (nullable)
-        public string? Ward { get; set; }        // Phường/Xã (nullable)
-        public string? StreetAddress { get; set; } // Địa chỉ cụ thể (số nhà, tên đường) (nullable)
-
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow; // Thêm trường này để theo dõi cập nhật
+        public string? AvatarUrl { get; set; }
+        public string? Province { get; set; }
+        public string? District { get; set; }
+        public string? Ward { get; set; }
+        public string? StreetAddress { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // Vẫn giữ nếu bạn muốn
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     }
 }

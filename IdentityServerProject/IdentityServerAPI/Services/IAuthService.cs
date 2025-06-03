@@ -1,4 +1,4 @@
-// IdentityServerAPI/Services/Interfaces/IAuthService.cs (Ví dụ)
+// IdentityServerAPI/Services/Interfaces/IAuthService.cs
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc; // Cần cho IActionResult hoặc các kiểu trả về tương tự
 using IdentityServerAPI.DTOs; 
