@@ -1,16 +1,16 @@
 // IdentityServerAPI/Controllers/UserController.cs
 using IdentityServerAPI.DTOs.User;
-using IdentityServerAPI.Models; // Cần cho ApplicationUser
+using IdentityServerAPI.Models;
 using IdentityServerAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http; // Cho IFormFile và StatusCodes
-using Microsoft.AspNetCore.Identity; // Cho UserManager<ApplicationUser>
+//using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Hosting; // Cho IWebHostEnvironment (hoặc Microsoft.AspNetCore.Hosting)
-using System; // Cho Path, Guid
-using System.IO; // Cho Path, FileStream, Directory
-using System.Linq; // Cho Select
-using System.Threading.Tasks;
+//using Microsoft.Extensions.Hosting;
+//using System; // Cho Path, Guid
+//using System.IO;
+//using System.Linq;
+//using System.Threading.Tasks;
 
 namespace IdentityServerAPI.Controllers
 {
@@ -59,7 +59,7 @@ namespace IdentityServerAPI.Controllers
             }
 
             // Kiểm tra kích thước file (ví dụ: 200KB = 200 * 1024 bytes)
-            // Bạn có thể đặt giá trị này vào appsettings.json
+            // Có thể đặt giá trị này vào appsettings.json
             long maxFileSize = 200 * 1024;
             if (file.Length > maxFileSize)
             {
@@ -87,8 +87,8 @@ namespace IdentityServerAPI.Controllers
                 var uploadsFolderPath = Path.Combine(_webHostEnvironment.WebRootPath ?? string.Empty, "avatars"); // Thư mục lưu avatars
                 if (string.IsNullOrEmpty(_webHostEnvironment.WebRootPath))
                 {
-                     // Log lỗi: WebRootPath is not configured.
-                    return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Lỗi cấu hình server: không tìm thấy thư mục gốc web."});
+                    // Log lỗi: WebRootPath is not configured.
+                    return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Lỗi cấu hình server: không tìm thấy thư mục gốc web." });
                 }
 
                 if (!Directory.Exists(uploadsFolderPath))
@@ -150,6 +150,18 @@ namespace IdentityServerAPI.Controllers
                 // _logger.LogError(ex, "Error occurred while uploading avatar.");
                 return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Đã có lỗi xảy ra trên máy chủ khi tải lên avatar." });
             }
+        }
+        
+        [HttpPost("me/security/enable-2fa")] // POST /api/user/me/security/enable-2fa
+        public async Task<IActionResult> EnableMyTwoFactorAuth()
+        {
+            return await _userService.EnableTwoFactorAuthAsync(User);
+        }
+
+        [HttpPost("me/security/disable-2fa")] // POST /api/user/me/security/disable-2fa
+        public async Task<IActionResult> DisableMyTwoFactorAuth()
+        {
+            return await _userService.DisableTwoFactorAuthAsync(User);
         }
     }
 }

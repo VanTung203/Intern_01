@@ -12,29 +12,8 @@ export const register = async (userData) => {
     return response.data;
   } catch (error) {
     // Interceptor trong apiClient.js có thể đã log lỗi, ở đây chỉ cần ném lại
-    // Hoặc bạn có thể thêm log cụ thể cho từng hàm nếu muốn
+    // Hoặc có thể thêm log cụ thể cho từng hàm nếu muốn
     console.error("API Error - Register in authService:", error.response?.data || error.message);
-    throw error;
-  }
-};
-
-/**
- * Gửi yêu cầu đăng nhập.
- * @param {object} credentials - Dữ liệu đăng nhập (ví dụ: { email, password })
- * @returns {Promise<object>} Promise chứa dữ liệu phản hồi (ví dụ: token).
- */
-export const login = async (credentials) => {
-  try {
-    const response = await apiClient.post('/api/auth/login', credentials);
-    if (response.data && response.data.token) {
-      localStorage.setItem('authToken', response.data.token);
-      setGlobalAuthHeader(response.data.token); // Sử dụng hàm set header toàn cục
-    }
-    return response.data;
-  } catch (error) {
-    console.error("API Error - Login in authService:", error.response?.data || error.message);
-    localStorage.removeItem('authToken');
-    setGlobalAuthHeader(null); // Xóa header khi login thất bại
     throw error;
   }
 };
@@ -87,7 +66,52 @@ export const resetPassword = async (resetData) => {
     }
 };
 
-// --- THÊM HÀM NÀY ---
+/**
+ * Gửi yêu cầu đăng nhập.
+ * @param {object} credentials - Dữ liệu đăng nhập (ví dụ: { email, password })
+ * @returns {Promise<object>} Promise chứa dữ liệu phản hồi (ví dụ: token).
+ */
+export const login = async (credentials) => {
+  try {
+    const response = await apiClient.post('/api/auth/login', credentials);
+    // KIỂM TRA XEM CÓ YÊU CẦU 2FA KHÔNG
+    if (response.data && response.data.requiresTwoFactor) {
+      return { requiresTwoFactor: true, email: response.data.email, message: response.data.message }; // Trả về đối tượng chỉ thị 2FA
+    }
+
+    // Nếu không yêu cầu 2FA, xử lý token như bình thường
+    if (response.data && response.data.token) {
+      localStorage.setItem('authToken', response.data.token);
+      setGlobalAuthHeader(response.data.token);
+      return { token: response.data.token, expiresIn: response.data.expiresIn, message: response.data.message }; // Trả về token
+    }
+    // Trường hợp không có token và cũng không yêu cầu 2FA (lỗi logic server)
+    throw new Error(response.data?.message || 'Đăng nhập không thành công, không nhận được token.');
+  } catch (error) {
+    console.error("API Error - Login in authService:", error.response?.data || error.message);
+    localStorage.removeItem('authToken');
+    setGlobalAuthHeader(null);
+    throw error;
+  }
+};
+
+// >>> HÀM XÁC THỰC OTP 2FA <<<
+export const verifyTwoFactorOtp = async (email, otpCode) => {
+  try {
+    const response = await apiClient.post('/api/auth/verify-2fa', { email, otpCode });
+    // Sau khi xác thực OTP thành công, backend sẽ trả về token
+    if (response.data && response.data.token) {
+      // Không cần lưu token ở đây, TwoFactorAuthForm sẽ làm
+      return response.data;
+    }
+    // Trường hợp API trả về 200 OK nhưng không có token
+    throw new Error(response.data?.message || 'Xác thực OTP không thành công, không nhận được token.');
+  } catch (error) {
+    console.error("API Error - Verify 2FA OTP in authService:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
 /**
  * Gửi yêu cầu đổi mật khẩu cho người dùng đã đăng nhập.
  * @param {object} passwordData - Dữ liệu chứa currentPassword, newPassword, confirmNewPassword
@@ -103,7 +127,6 @@ export const changePassword = async (passwordData) => {
     throw error;
   }
 };
-// --- KẾT THÚC PHẦN THÊM ---
 
 /**
  * Xử lý đăng xuất người dùng.
@@ -120,5 +143,3 @@ export const logout = () => {
   // }
   console.log("User logged out via authService, global auth header cleared.");
 };
-
-// Hàm setAuthHeader cục bộ không còn cần thiết và đã bị xóa/comment ở code gốc của bạn, điều đó là đúng.

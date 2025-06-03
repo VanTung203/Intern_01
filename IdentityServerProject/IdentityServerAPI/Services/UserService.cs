@@ -3,21 +3,23 @@ using IdentityServerAPI.DTOs.User;
 using IdentityServerAPI.Models;
 using IdentityServerAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc; // Cần cho IActionResult và các ObjectResults
-using System; // Cho DateTime
-using System.Linq; // Cho Select
+using Microsoft.AspNetCore.Mvc;
+//using System;
+//using System.Linq;
 using System.Security.Claims;
-using System.Threading.Tasks;
+//using System.Threading.Tasks;
 
 namespace IdentityServerAPI.Services
 {
     public class UserService : IUserService
     {
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly ILogger<UserService> _logger;
 
-        public UserService(UserManager<ApplicationUser> userManager)
+        public UserService(UserManager<ApplicationUser> userManager, ILogger<UserService> logger)
         {
             _userManager = userManager;
+            _logger = logger;
         }
 
         public async Task<IActionResult> GetUserProfileAsync(ClaimsPrincipal userPrincipal)
@@ -79,6 +81,53 @@ namespace IdentityServerAPI.Services
             // Trả về 200 OK với thông báo thành công
             // Có thể trả về cả UserProfileDto đã được cập nhật nếu frontend cần
             return new OkObjectResult(new { message = "Hồ sơ đã được cập nhật thành công." });
+        }
+
+        public async Task<IActionResult> EnableTwoFactorAuthAsync(ClaimsPrincipal userPrincipal)
+        {
+            var user = await _userManager.GetUserAsync(userPrincipal);
+            if (user == null)
+            {
+                return new NotFoundObjectResult(new { message = "Không tìm thấy người dùng." });
+            }
+
+            // Đảm bảo email đã được xác nhận trước khi bật 2FA qua email
+            if (!user.EmailConfirmed)
+            {
+                 return new BadRequestObjectResult(new { message = "Vui lòng xác nhận địa chỉ email của bạn trước khi bật xác thực 2 lớp." });
+            }
+
+            var result = await _userManager.SetTwoFactorEnabledAsync(user, true);
+            if (!result.Succeeded)
+            {
+                _logger.LogError("Failed to enable 2FA for user {UserId}: {Errors}", user.Id, string.Join(", ", result.Errors.Select(e => e.Description)));
+                return new BadRequestObjectResult(new { title = "Không thể bật xác thực 2 lớp.", errors = result.Errors.Select(e => new { e.Code, e.Description }) });
+            }
+
+            _logger.LogInformation("2FA enabled for user {UserId}", user.Id);
+            // (Tùy chọn) Nếu muốn tạo và hiển thị mã khôi phục (recovery codes) ở đây cho người dùng
+            // var recoveryCodes = await _userManager.GenerateNewTwoFactorRecoveryCodesAsync(user, 10);
+            // return new OkObjectResult(new { message = "Xác thực 2 lớp đã được bật.", recoveryCodes = recoveryCodes });
+            return new OkObjectResult(new { message = "Xác thực 2 lớp đã được bật." });
+        }
+
+        public async Task<IActionResult> DisableTwoFactorAuthAsync(ClaimsPrincipal userPrincipal)
+        {
+            var user = await _userManager.GetUserAsync(userPrincipal);
+            if (user == null)
+            {
+                return new NotFoundObjectResult(new { message = "Không tìm thấy người dùng." });
+            }
+
+            var result = await _userManager.SetTwoFactorEnabledAsync(user, false);
+            if (!result.Succeeded)
+            {
+                _logger.LogError("Failed to disable 2FA for user {UserId}: {Errors}", user.Id, string.Join(", ", result.Errors.Select(e => e.Description)));
+                return new BadRequestObjectResult(new { title = "Không thể tắt xác thực 2 lớp.", errors = result.Errors.Select(e => new { e.Code, e.Description }) });
+            }
+
+            _logger.LogInformation("2FA disabled for user {UserId}", user.Id);
+            return new OkObjectResult(new { message = "Xác thực 2 lớp đã được tắt." });
         }
     }
 }

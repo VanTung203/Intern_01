@@ -26,7 +26,7 @@ apiClient.interceptors.response.use(response => {
   if (error.response && error.response.status === 401) {
     // Xử lý lỗi 401 (Unauthorized) tập trung ở đây nếu muốn
     // Ví dụ: gọi hàm logout, điều hướng về trang login
-    // logoutAndRedirect(); // Bạn cần định nghĩa hàm này hoặc gọi trực tiếp từ authService
+    // logoutAndRedirect(); // cần định nghĩa hàm này hoặc gọi trực tiếp từ authService
     console.log("Unauthorized request, potentially redirecting to login.");
   }
   return Promise.reject(error); // Quan trọng: Ném lại lỗi

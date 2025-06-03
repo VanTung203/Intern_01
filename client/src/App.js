@@ -15,6 +15,7 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ForgotPasswordEmailSentPage from './pages/ForgotPasswordEmailSentPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import ResetPasswordSuccessPage from './pages/ResetPasswordSuccessPage';
+import TwoFactorAuthPage from './pages/TwoFactorAuthPage';
 
 // Private Pages
 import UserProfilePage from './pages/UserProfilePage';
@@ -23,9 +24,7 @@ import UserSecurityContent from './components/User/UserSecurityContent';
 
 import { Typography, Box } from '@mui/material'; // << THÊM Box VÀO ĐÂY
 
-// Giả sử bạn đã tạo apiClient.js và setGlobalAuthHeader như đã thảo luận
-// Nếu không, bạn sẽ cần import setAuthHeader từ cả authService và userService
-import { setGlobalAuthHeader } from './api/apiClient'; // HOẶC import từ authService và userService
+import { setGlobalAuthHeader } from './api/apiClient';
 
 // Component bảo vệ Route
 const PrivateRoute = ({ children }) => {
@@ -40,7 +39,7 @@ function App() {
     const token = localStorage.getItem('authToken');
     if (token) {
       setGlobalAuthHeader(token); // Gọi hàm để set header cho apiClient toàn cục
-      // Nếu bạn không dùng apiClient chung:
+      // Nếu không dùng apiClient chung:
       // import { setAuthHeader as setAuthServiceHeader } from './services/authService';
       // import { setUserAuthHeader as setUserServiceHeader } from './services/userService';
       // setAuthServiceHeader(token);
@@ -54,13 +53,14 @@ function App() {
         {/* Public Routes: Không cần DashboardLayout, có thể có PublicPageLayout nếu RegisterPage không tự chứa layout */}
         {/* Nếu RegisterPage và LoginPage đã dùng PublicPageLayout bên trong chúng thì không cần bọc ở đây */}
         <Route path="/register" element={<RegisterPage />} />
-        <Route path="/login" element={<LoginPage />} />
         <Route path="/please-verify-email" element={<PleaseVerifyEmailPage />} />
         <Route path="/email-confirmed" element={<EmailConfirmedPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/forgot-password-email-sent" element={<ForgotPasswordEmailSentPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/reset-password-success" element={<ResetPasswordSuccessPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/verify-2fa" element={<TwoFactorAuthPage />} />
 
         {/* Private Routes using DashboardLayout */}
         {/* Cách tiếp cận 1: Bọc DashboardLayout bằng PrivateRoute */}

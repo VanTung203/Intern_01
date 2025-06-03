@@ -1,6 +1,6 @@
 // IdentityServerAPI/Models/ApplicationUser.cs
 using AspNetCore.Identity.MongoDbCore.Models; // THÊM USING NÀY
-using System; // Cho Guid
+//using System; // Cho Guid
 
 namespace IdentityServerAPI.Models
 {
@@ -14,7 +14,7 @@ namespace IdentityServerAPI.Models
         public string? District { get; set; }
         public string? Ward { get; set; }
         public string? StreetAddress { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // Vẫn giữ nếu bạn muốn
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     }
 }

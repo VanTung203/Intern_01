@@ -4,8 +4,8 @@ using MimeKit;
 using Microsoft.Extensions.Options;
 using IdentityServerAPI.Configuration;
 using IdentityServerAPI.Services.Interfaces; // Thêm using cho interface
-using System.Threading.Tasks;
-using System;
+//using System.Threading.Tasks;
+//using System;
 
 namespace IdentityServerAPI.Services
 {
@@ -23,7 +23,7 @@ namespace IdentityServerAPI.Services
                 string.IsNullOrEmpty(_emailSettings.Username) ||
                 string.IsNullOrEmpty(_emailSettings.Password))
             {
-                // Bạn có thể log lỗi ở đây nếu có ILogger được inject
+                // Có thể log lỗi ở đây nếu có ILogger được inject
                 throw new InvalidOperationException("Email settings are not properly configured or missing.");
             }
         }

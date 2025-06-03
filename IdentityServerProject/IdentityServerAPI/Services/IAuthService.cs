@@ -1,9 +1,9 @@
 // IdentityServerAPI/Services/Interfaces/IAuthService.cs
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc; // Cần cho IActionResult hoặc các kiểu trả về tương tự
+//using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using IdentityServerAPI.DTOs; 
-using System.Threading.Tasks;
-using System.Security.Claims; // << THÊM DÒNG NÀY
+//using System.Threading.Tasks;
+using System.Security.Claims;
 
 namespace IdentityServerAPI.Services.Interfaces
 {
@@ -12,6 +12,7 @@ namespace IdentityServerAPI.Services.Interfaces
         Task<IActionResult> RegisterUserAsync(RegisterDto model, IUrlHelper url, string requestScheme);
         Task<IActionResult> ConfirmUserEmailAsync(string userId, string token, string frontendLoginUrl);
         Task<IActionResult> LoginUserAsync(LoginDto model);
+        Task<IActionResult> VerifyTwoFactorTokenAsync(VerifyTwoFactorDto model);
         Task<IActionResult> ForgotPasswordAsync(ForgotPasswordDto model);
         Task<IActionResult> ResetUserPasswordAsync(ResetPasswordDto model);
         Task<IActionResult> ChangeUserPasswordAsync(ClaimsPrincipal userPrincipal, ChangePasswordDto model);

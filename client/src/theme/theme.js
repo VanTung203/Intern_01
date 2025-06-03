@@ -61,7 +61,7 @@ const theme = createTheme({
     h6: { fontWeight: 400, fontSize: '1.125rem', lineHeight: 1.6, color: GREY[600] }, // Mô tả dưới "Vietbando, Xin Chào!"
 
     subtitle1: { fontWeight: 600, fontSize: '1rem', lineHeight: 1.5 },
-    subtitle2: { fontWeight: 500, fontSize: '0.875rem', lineHeight: 1.5, color: GREY[600] }, // "Bạn đã có tài khoản?"
+    subtitle2: { fontWeight: 500, fontSize: '0.875rem', lineHeight: 1.5, color: GREY[600] }, // "Đã có tài khoản?"
 
     body1: { fontSize: '1rem', lineHeight: 1.6, color: GREY[700] }, // Có thể dùng cho mô tả cột trái
     body2: { fontSize: '0.875rem', lineHeight: 1.5, color: GREY[600] }, // Text của checkbox, link "Cần trợ giúp?"

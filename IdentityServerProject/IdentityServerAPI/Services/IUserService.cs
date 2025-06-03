@@ -1,8 +1,8 @@
 // IdentityServerAPI/Services/Interfaces/IUserService.cs
 using IdentityServerAPI.DTOs.User;
-using Microsoft.AspNetCore.Mvc; // Cho IActionResult
+using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
-using System.Threading.Tasks;
+//using System.Threading.Tasks;
 
 namespace IdentityServerAPI.Services.Interfaces
 {
@@ -10,5 +10,7 @@ namespace IdentityServerAPI.Services.Interfaces
     {
         Task<IActionResult> GetUserProfileAsync(ClaimsPrincipal userPrincipal);
         Task<IActionResult> UpdateUserProfileAsync(ClaimsPrincipal userPrincipal, UpdateUserProfileDto model);
+        Task<IActionResult> EnableTwoFactorAuthAsync(ClaimsPrincipal userPrincipal);
+        Task<IActionResult> DisableTwoFactorAuthAsync(ClaimsPrincipal userPrincipal);
     }
 }

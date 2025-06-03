@@ -10,7 +10,7 @@ import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import { changePassword } from '../../services/authService'; // Đảm bảo hàm này có trong authService
 
-// Hàm helper renderTextField (nếu bạn dùng chung, hãy import)
+// Hàm helper renderTextField (import nếu dùng chung)
 const renderFloatingLabelTextField = ({
   name,
   labelText,
@@ -216,8 +216,8 @@ const ChangePasswordForm = () => {
             // Logic màu sắc dựa trên trạng thái disabled
             ...( (isLoading || !formData.currentPassword || !formData.newPassword || !formData.confirmNewPassword || Object.values(errors).some(e => !!e)) ?
               { // Khi disabled
-                backgroundColor: 'grey.300', // Màu xám nhạt khi disable (từ theme của bạn)
-                color: 'text.disabled',      // Màu chữ khi disable (từ theme của bạn)
+                backgroundColor: 'grey.300', // Màu xám nhạt khi disable (từ theme)
+                color: 'text.disabled',      // Màu chữ khi disable (từ theme)
                 '&:hover': {
                   backgroundColor: 'grey.300', // Giữ nguyên màu khi hover lúc disable
                 }

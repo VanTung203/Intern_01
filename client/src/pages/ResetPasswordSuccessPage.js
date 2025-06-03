@@ -5,7 +5,7 @@ import { Link as RouterLink, useLocation } from 'react-router-dom';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import PublicPageLayout from '../components/layouts/PublicPageLayout';
 
-// Component Logo (nếu bạn muốn có logo riêng ở đây, nhưng PublicPageLayout đã có)
+// Component Logo (nếu muốn có logo riêng ở đây, nhưng PublicPageLayout đã có)
 // const VietbandoLogoWithText = () => ( /* ... */ );
 
 const ResetPasswordSuccessPageContent = () => {

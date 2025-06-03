@@ -4,7 +4,7 @@ import { TextField, Button, Box, Alert, CircularProgress, Typography } from '@mu
 import { useNavigate } from 'react-router-dom';
 import { forgotPassword } from '../../services/authService';
 
-// Hàm helper renderTextField (giữ nguyên như bạn đã có, hoặc import từ file chung)
+// Hàm helper renderTextField (giữ nguyên như đã có, hoặc import từ file chung)
 // Đảm bảo hàm này nhận đủ các props như error, disabled, value, onChange, autoFocus, isRequired
 const renderFloatingLabelTextField = ({ name, labelText, placeholder, type = 'text', autoComplete = name, isRequired = true, autoFocus = false, value, onChange, error, disabled, InputProps, inputProps }) => (
     <Box sx={{ position: 'relative', mb: 2.25 }}>
@@ -92,7 +92,7 @@ const ForgotPasswordForm = () => {
         });
 
       } catch (error) {
-        // Backend của bạn hiện tại không ném lỗi cho email không tồn tại,
+        // Backend hiện tại không ném lỗi cho email không tồn tại,
         // nó trả về Ok với một message.
         // Lỗi ở đây sẽ là lỗi mạng hoặc lỗi server 500.
         setApiMessage({

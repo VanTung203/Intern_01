@@ -114,7 +114,7 @@ const UserProfileInfoForm = () => {
     };
 
     // Hàm này bây giờ sẽ được gọi từ AvatarCard thông qua input file của nó
-    // Hoặc nếu bạn muốn UserProfileInfoForm vẫn quản lý input file:
+    // Hoặc nếu muốn UserProfileInfoForm vẫn quản lý input file:
     const handleAvatarFileChange = (e) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
@@ -197,7 +197,7 @@ const UserProfileInfoForm = () => {
 
     return (
         <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', height: '100%', width:400 /* Để form chiếm hết chiều cao card */ }}>
-            {/* Input file ẩn, AvatarCard sẽ trigger nó nếu cần, hoặc bạn tạo 1 nút riêng trong UserProfileInfoForm nếu không muốn click avatar để tải */}
+            {/* Input file ẩn, AvatarCard sẽ trigger nó nếu cần, hoặc tạo 1 nút riêng trong UserProfileInfoForm nếu không muốn click avatar để tải */}
             <input type="file" hidden accept=".jpeg,.jpg,.png,.gif" onChange={handleAvatarFileChange} ref={fileInputRef}/>
 
             {apiMessage && <Alert severity={apiMessage.type} sx={{ mb: 2 }} onClose={() => setApiMessage(null)}>{apiMessage.text}</Alert>}
