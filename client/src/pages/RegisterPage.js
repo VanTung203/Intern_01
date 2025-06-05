@@ -40,7 +40,7 @@ const RegisterPage = () => {
         square
         sx={{
           p: 0, // Bỏ padding ở đây nếu Box bên trong đã tự căn chỉnh
-          pl: { xs: 2.5, sm: 6, md: 8, lg: 35 },
+          pl: { xs: 2.5, sm: 6, md: 8, lg: 20 },
           backgroundColor: 'transparent', // Nền trong suốt để lấy nền từ PublicPageLayout
           width: '100%', // Chiếm toàn bộ không gian được cấp bởi Grid item của PublicPageLayout
           display: 'flex', // Để căn giữa RegisterPageSpecificContent

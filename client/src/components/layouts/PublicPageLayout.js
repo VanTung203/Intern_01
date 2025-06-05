@@ -83,12 +83,12 @@ const PublicPageLayout = ({ children }) => {
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            p: { xs:2, sm: 3, md: 6, lg: 8 },
+            p: { xs:2, sm: 3, md: 6, lg: 4 },
             backgroundColor: '#F9FAFB', // Màu nền xám nhạt
           }}
         >
-          <Box sx={{ maxWidth: 330, textAlign: 'center' }}> {/* Điều chỉnh maxWidth nếu cần */}
-            <Typography component="h1" variant="h3" sx={{ fontWeight: 700, mb: 1.5, color: 'text.primary' }}>
+          <Box sx={{ maxWidth: 330, textAlign: 'center' }}>
+            <Typography component="h1" variant="h2" sx={{ fontWeight: 700, mb: 1.5, color: 'text.primary' }}>
               Vietbando, Xin Chào!
             </Typography>
             <Typography variant="body1" color="text.secondary" sx={{ mb: 4, lineHeight: 1.6 }}>
@@ -107,6 +107,8 @@ const PublicPageLayout = ({ children }) => {
           lg={9}
           // Không dùng component={Paper} ở đây nữa, để trang con tự quyết định
           sx={{
+            minWidth: '1000px', // TẠM THỜI THÊM ĐỂ XEM CÓ TÁC DỤNG KHÔNG
+            // border: '1px solid red', // Bật lên để debu
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',    // Căn giữa Box con chứa nội dung

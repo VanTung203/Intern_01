@@ -88,14 +88,14 @@ const ForgotPasswordEmailSentPageContent = () => {
             elevation={0}
             square
             sx={{
-                pl: { xs: 2.5, sm: 6, md: 8, lg: 30 },
+                pl: { xs: 2.5, sm: 6, md: 8, lg: 20 },
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
                 textAlign: 'center',
                 backgroundColor: 'transparent',
                 width: '100%',
-                maxWidth: 700,
+                maxWidth: 600,
             }}
         >
             <img

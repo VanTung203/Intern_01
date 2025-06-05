@@ -323,7 +323,7 @@ namespace IdentityServerAPI.Services
             }
 
             _logger.LogInformation("Password reset successfully for user {Email}", model.Email);
-            return new OkObjectResult(new { message = "Đặt lại mật khẩu thành công. Bạn có thể đăng nhập bằng mật khẩu mới." });
+            return new OkObjectResult(new { message = "Bạn có thể đăng nhập bằng mật khẩu mới ngay bây giờ." });
         }
 
         public async Task<IActionResult> ChangeUserPasswordAsync(ClaimsPrincipal userPrincipal, ChangePasswordDto model)

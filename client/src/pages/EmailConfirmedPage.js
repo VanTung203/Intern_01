@@ -14,14 +14,14 @@ const EmailConfirmedPageContent = () => (
         square
         sx={{
             p: { xs: 3, sm: 4, md: 5 }, // Padding chung cho Paper
-            pl: { xs: 2.5, sm: 6, md: 8, lg: 35 },
+            pl: { xs: 2.5, sm: 6, md: 8, lg: 20 },
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             textAlign: 'center',
             backgroundColor: 'transparent',
             width: '100%',
-            maxWidth: 700,
+            maxWidth: 600,
         }}
     >
         <CheckCircleOutlineIcon sx={{ fontSize: 60, color: 'success.main', mb: 2 }} />

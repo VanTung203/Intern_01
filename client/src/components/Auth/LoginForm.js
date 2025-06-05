@@ -194,6 +194,22 @@ const LoginForm = () => {
         isRequired: true
       })}
 
+      <Box sx={{ textAlign: 'right', mt: -1.5, mb: 1.5 }}> {/* Điều chỉnh margin nếu cần */}
+        <MuiLink
+            component={RouterLink}
+            to="/forgot-password"
+            variant="caption"
+            sx={{
+                fontWeight: 500,
+                color: 'text.primary',
+                textDecoration: 'none',
+                fontSize: '0.75rem', // Hoặc kích thước phù hợp
+            }}
+            >
+            Quên mật khẩu?
+        </MuiLink>
+      </Box>
+
       {/* Sử dụng renderFloatingLabelTextFieldInternal cho trường password để nhất quán */}
       {renderFloatingLabelTextFieldInternal({
         name: "password",
@@ -205,22 +221,6 @@ const LoginForm = () => {
         showPasswordState: showPassword,
         togglePasswordVisibility: handleClickShowPassword
       })}
-      {/* Đặt link Quên mật khẩu bên ngoài hàm render để dễ quản lý hơn nếu cần */}
-      <Box sx={{ textAlign: 'right', mt: -1.5, mb: 1.5 }}> {/* Điều chỉnh margin nếu cần */}
-        <MuiLink
-            component={RouterLink}
-            to="/forgot-password"
-            variant="caption"
-            sx={{
-                fontWeight: 500,
-                color: 'primary.main',
-                textDecoration: 'none',
-                fontSize: '0.75rem', // Hoặc kích thước phù hợp
-            }}
-            >
-            Quên mật khẩu?
-        </MuiLink>
-      </Box>
 
 
       <Button

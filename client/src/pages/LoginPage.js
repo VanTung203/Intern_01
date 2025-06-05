@@ -13,7 +13,8 @@ const LoginPageContent = () => (
             flexDirection: 'column',
             alignItems: 'flex-start',
             width: '100%',
-            maxWidth: 420,
+            maxWidth: 350,
+            // border: '1px solid red', // Bật lên để debug
         }}
     >
         <Typography component="h2" variant="h5" sx={{ fontWeight: 700, mb: 0.75, color: 'text.primary' }}>
@@ -38,7 +39,7 @@ const LoginPage = () => {
         square 
         sx={{ 
             p:0,
-            pl: { xs: 2.5, sm: 6, md: 8, lg: 40 },
+            pl: { xs: 2.5, sm: 6, md: 8, lg: 20 },
             backgroundColor: 'transparent', 
             width: '100%', 
             display: 'flex',

@@ -18,22 +18,23 @@ const ResetPasswordSuccessPageContent = () => {
             elevation={0}
             square
             sx={{
-                pl: { xs: 2.5, sm: 6, md: 8, lg: 40 },
+                pl: { xs: 2.5, sm: 6, md: 8, lg: 20 },
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
                 textAlign: 'center',
                 backgroundColor: 'transparent',
                 width: '100%',
-                maxWidth: 650
+                maxWidth: 500
             }}
         >
             <CheckCircleOutlineIcon sx={{ fontSize: 60, color: 'success.main', mb: 2 }} />
             <Typography variant="h5" component="h1" sx={{ fontWeight: 'bold', mb: 2 }}>
-                Thành công!
+                Đặt lại mật khẩu thành công!
             </Typography>
-            <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-                {messageFromServer} <br/>Bạn có thể đăng nhập ngay bây giờ.
+            <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
+                {messageFromServer} 
+                {/* <br/>Bạn có thể đăng nhập ngay bây giờ. */}
             </Typography>
             <Button component={RouterLink} to="/login" variant="contained" color="primary" sx={{ mt: 2 }}>
                 Đi đến Đăng nhập

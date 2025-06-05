@@ -34,7 +34,7 @@ const PleaseVerifyEmailPageContent = () => {
             elevation={0} // Bỏ shadow nếu PublicPageLayout đã có nền
             square
             sx={{
-                pl: { xs: 2.5, sm: 6, md: 8, lg: 30 },
+                pl: { xs: 2.5, sm: 6, md: 8, lg: 20 },
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
