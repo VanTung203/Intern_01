@@ -1,12 +1,21 @@
 // IdentityServerAPI/Models/ApplicationRole.cs
-using AspNetCore.Identity.MongoDbCore.Models; // THÊM USING NÀY
+using AspNetCore.Identity.MongoDbCore.Models;
 using System; // Cho Guid
 
 namespace IdentityServerAPI.Models
 {
-    // SỬA ĐỔI: Kế thừa từ MongoIdentityRole và sử dụng Guid làm kiểu khóa
     public class ApplicationRole : MongoIdentityRole<Guid>
     {
-        // Thêm các thuộc tính tùy chỉnh cho Role
+        // Constructor mặc định cần thiết cho việc tạo instance bởi ASP.NET Core Identity
+        public ApplicationRole() : base()
+        {
+        }
+
+        // Constructor nhận roleName, hữu ích khi tạo role mới bằng code
+        public ApplicationRole(string roleName) : base(roleName)
+        {
+        }
+        // Thêm các thuộc tính tùy chỉnh cho Role nếu cần
+        // public string Description { get; set; }
     }
 }

@@ -12,6 +12,7 @@ using IdentityServerAPI.Configuration;
 using IdentityServerAPI.Services;
 using IdentityServerAPI.Services.Interfaces; // Đã có
 using Microsoft.OpenApi.Models;
+using Microsoft.Extensions.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -171,12 +172,29 @@ builder.WebHost.ConfigureKestrel(options =>
 
 var app = builder.Build();
 
-// --- Configure the HTTP request pipeline (Giữ nguyên) ---
+// Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "IdentityServerAPI v1"));
     app.UseDeveloperExceptionPage();
+
+    // GỌI HÀM SEED Ở ĐÂY
+    using (var scope = app.Services.CreateScope()) // Tạo scope để lấy services
+    {
+        var services = scope.ServiceProvider;
+        try
+        {
+            // Gọi hàm seed, truyền services provider để nó có thể resolve UserManager, RoleManager,...
+            await SeedDatabaseAsync(services);
+        }
+        catch (Exception ex)
+        {
+            var logger = services.GetRequiredService<ILogger<Program>>();
+            logger.LogError(ex, "An error occurred while seeding the DB.");
+        }
+    }
+
 }
 else
 {
@@ -191,3 +209,104 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.Run();
+
+// ĐỊNH NGHĨA HÀM SEED DATABASE
+async Task SeedDatabaseAsync(IServiceProvider services)
+{
+    // Không cần tạo scope nữa vì đã tạo ở nơi gọi
+    var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
+    var roleManager = services.GetRequiredService<RoleManager<ApplicationRole>>();
+    var configuration = services.GetRequiredService<IConfiguration>();
+    var logger = services.GetRequiredService<ILogger<Program>>(); // Hoặc ILogger<T> nếu tạo class riêng cho Seeder
+
+    logger.LogInformation("Attempting to seed database...");
+
+    // 1. Seed Roles
+    string adminRoleName = "Admin";
+    string userRoleName = "User";
+
+    if (!await roleManager.RoleExistsAsync(adminRoleName))
+    {
+        var adminRole = new ApplicationRole(adminRoleName); // Sử dụng constructor đã định nghĩa
+        var result = await roleManager.CreateAsync(adminRole);
+        if (result.Succeeded) logger.LogInformation($"Role '{adminRoleName}' created successfully.");
+        else logger.LogError($"Error creating role '{adminRoleName}': {string.Join(", ", result.Errors.Select(e => e.Description))}");
+    }
+    else
+    {
+        logger.LogInformation($"Role '{adminRoleName}' already exists.");
+    }
+
+    if (!await roleManager.RoleExistsAsync(userRoleName))
+    {
+        var userRole = new ApplicationRole(userRoleName);
+        var result = await roleManager.CreateAsync(userRole);
+        if (result.Succeeded) logger.LogInformation($"Role '{userRoleName}' created successfully.");
+        else logger.LogError($"Error creating role '{userRoleName}': {string.Join(", ", result.Errors.Select(e => e.Description))}");
+    }
+    else
+    {
+        logger.LogInformation($"Role '{userRoleName}' already exists.");
+    }
+
+    // 2. Seed Admin User
+    var adminConfig = configuration.GetSection("SeedAdminUser");
+    var adminEmail = adminConfig["Email"];
+    var adminUserName = adminConfig["UserName"];
+    var adminPassword = adminConfig["Password"];
+
+    if (string.IsNullOrEmpty(adminEmail) || string.IsNullOrEmpty(adminPassword) || string.IsNullOrEmpty(adminUserName))
+    {
+        logger.LogError("Admin user seed configuration (Email, UserName, Password) is missing in appsettings.json. Skipping admin user seed.");
+        return; // Thoát nếu thiếu cấu hình
+    }
+
+    var adminUserInDb = await userManager.FindByEmailAsync(adminEmail);
+    if (adminUserInDb == null)
+    {
+        var newAdminUser = new ApplicationUser
+        {
+            UserName = adminUserName,
+            Email = adminEmail,
+            EmailConfirmed = true, // Admin đầu tiên nên được xác thực sẵn
+            FirstName = adminConfig["FirstName"] ?? "Admin1", // Sử dụng giá trị từ config hoặc mặc định
+            LastName = adminConfig["LastName"] ?? "Admin",
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        var result = await userManager.CreateAsync(newAdminUser, adminPassword);
+        if (result.Succeeded)
+        {
+            logger.LogInformation($"Admin user '{adminEmail}' created successfully.");
+            // Gán vai trò Admin
+            if (await roleManager.RoleExistsAsync(adminRoleName))
+            {
+                var addToRoleResult = await userManager.AddToRoleAsync(newAdminUser, adminRoleName);
+                if (addToRoleResult.Succeeded) logger.LogInformation($"User '{adminEmail}' added to role '{adminRoleName}'.");
+                else logger.LogError($"Error adding user '{adminEmail}' to role '{adminRoleName}': {string.Join(", ", addToRoleResult.Errors.Select(e => e.Description))}");
+            }
+            else
+            {
+                 logger.LogWarning($"Role '{adminRoleName}' does not exist. Cannot assign to admin user.");
+            }
+        }
+        else
+        {
+            logger.LogError($"Failed to create admin user '{adminEmail}': {string.Join(", ", result.Errors.Select(e => e.Description))}");
+        }
+    }
+    else
+    {
+        logger.LogInformation($"Admin user '{adminEmail}' already exists.");
+        // Đảm bảo admin user hiện tại có vai trò Admin, nếu chưa có thì gán lại
+        if (!await userManager.IsInRoleAsync(adminUserInDb, adminRoleName) && await roleManager.RoleExistsAsync(adminRoleName))
+        {
+            logger.LogInformation($"Attempting to add role '{adminRoleName}' to existing admin user '{adminEmail}'.");
+            var addToRoleResult = await userManager.AddToRoleAsync(adminUserInDb, adminRoleName);
+             if (addToRoleResult.Succeeded) logger.LogInformation($"Existing user '{adminEmail}' successfully added to role '{adminRoleName}'.");
+             else logger.LogError($"Error adding existing user '{adminEmail}' to role '{adminRoleName}': {string.Join(", ", addToRoleResult.Errors.Select(e => e.Description))}");
+        }
+    }
+    logger.LogInformation("Database seeding finished.");
+}
