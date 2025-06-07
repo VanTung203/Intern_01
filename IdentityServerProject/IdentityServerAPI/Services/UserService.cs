@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 //using System.Linq;
 using System.Security.Claims;
 //using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace IdentityServerAPI.Services
 {
@@ -94,7 +95,7 @@ namespace IdentityServerAPI.Services
             // Đảm bảo email đã được xác nhận trước khi bật 2FA qua email
             if (!user.EmailConfirmed)
             {
-                 return new BadRequestObjectResult(new { message = "Vui lòng xác nhận địa chỉ email của bạn trước khi bật xác thực 2 lớp." });
+                return new BadRequestObjectResult(new { message = "Vui lòng xác nhận địa chỉ email của bạn trước khi bật xác thực 2 lớp." });
             }
 
             var result = await _userManager.SetTwoFactorEnabledAsync(user, true);
@@ -128,6 +129,34 @@ namespace IdentityServerAPI.Services
 
             _logger.LogInformation("2FA disabled for user {UserId}", user.Id);
             return new OkObjectResult(new { message = "Xác thực 2 lớp đã được tắt." });
+        }
+
+        public async Task<IActionResult> GetAllUsersAsync()
+        {
+            // Lấy tất cả người dùng. ToListAsync() để thực thi câu truy vấn.
+            var users = _userManager.Users.ToList();
+
+            var userDtos = new List<UserProfileDto>();
+
+            foreach (var user in users)
+            {
+                userDtos.Add(new UserProfileDto
+                {
+                    Id = user.Id.ToString(),
+                    Email = user.Email,
+                    FirstName = user.FirstName,
+                    LastName = user.LastName,
+                    EmailConfirmed = user.EmailConfirmed,
+                    PhoneNumber = user.PhoneNumber,
+                    LockoutEnd = user.LockoutEnd,
+                    TwoFactorEnabled = user.TwoFactorEnabled,
+                    AvatarUrl = user.AvatarUrl,
+                    // Lấy danh sách vai trò của từng người dùng
+                    Roles = await _userManager.GetRolesAsync(user)
+                });
+            }
+
+            return new OkObjectResult(userDtos);
         }
     }
 }

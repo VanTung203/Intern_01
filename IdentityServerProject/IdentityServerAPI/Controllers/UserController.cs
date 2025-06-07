@@ -151,7 +151,7 @@ namespace IdentityServerAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Đã có lỗi xảy ra trên máy chủ khi tải lên avatar." });
             }
         }
-        
+
         [HttpPost("me/security/enable-2fa")] // POST /api/user/me/security/enable-2fa
         public async Task<IActionResult> EnableMyTwoFactorAuth()
         {
@@ -162,6 +162,13 @@ namespace IdentityServerAPI.Controllers
         public async Task<IActionResult> DisableMyTwoFactorAuth()
         {
             return await _userService.DisableTwoFactorAuthAsync(User);
+        }
+        
+        [HttpGet("all")] // Route: GET /api/user/all
+        [Authorize(Roles = "Admin")] // <-- RẤT QUAN TRỌNG: Chỉ người dùng có vai trò "Admin" mới được truy cập
+        public async Task<IActionResult> GetAllUsers()
+        {
+            return await _userService.GetAllUsersAsync();
         }
     }
 }

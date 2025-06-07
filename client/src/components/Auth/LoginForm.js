@@ -7,10 +7,12 @@ import {
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
-import { login } from '../../services/authService'; // Import hàm login
+import { login } from '../../services/authService';
+import { useAuth } from '../../context/AuthContext';
 
 const LoginForm = () => {
   const navigate = useNavigate();
+  const auth = useAuth(); // <-- LẤY CONTEXT
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -43,69 +45,45 @@ const LoginForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setApiMessage(null); // Xóa thông báo cũ trước khi submit
+    setApiMessage(null);
     if (validate()) {
-      setIsLoading(true);
-      try {
-        const response = await login(formData); // Gọi API login từ authService
+        setIsLoading(true);
+        try {
+            const response = await login(formData); // response giờ là data từ API
 
-        if (response && response.requiresTwoFactor) {
-          // Yêu cầu xác thực 2FA
-          setApiMessage({
-            type: 'info',
-            text: response.message || "Yêu cầu xác thực 2 lớp. Đang chuyển hướng..."
-          });
-          // Chuyển hướng đến trang nhập OTP 2FA, truyền email và thông điệp (nếu có)
-          setTimeout(() => { // Delay để người dùng có thể đọc thông báo (tùy chọn)
-            navigate('/verify-2fa', {
-              state: {
-                email: formData.email,
-                message: response.message // Thông điệp từ server (ví dụ: "Vui lòng kiểm tra email...")
-              }
-            });
-          }, 1500);
-        } else if (response && response.token) {
-          // Đăng nhập thành công, không yêu cầu 2FA
-          // authService.login đã lưu token và set header rồi
-          setApiMessage({
-            type: 'success',
-            text: response.message || "Đăng nhập thành công! Đang chuyển hướng..."
-          });
-          // TODO: Cập nhật trạng thái đăng nhập toàn cục (ví dụ: Context API, Redux)
-          // Ví dụ: authContext.login(response.user, response.token);
-          setTimeout(() => {
-              navigate('/profile/info'); // Hoặc trang chính sau khi đăng nhập (ví dụ /dashboard)
-          }, 1500);
-        } else {
-          // Trường hợp response không có token và cũng không yêu cầu 2FA (có thể là lỗi logic server)
-          setApiMessage({
-            type: 'error',
-            text: response?.message || 'Lỗi không xác định sau khi đăng nhập. Vui lòng thử lại.'
-          });
-        }
-      } catch (error) {
-        // authService.login đã xử lý việc xóa token nếu login thất bại
-        // Xử lý các lỗi cụ thể từ API
-        if (error.response && error.response.data) {
-            if (error.response.data.requireEmailConfirmation) {
-                 setApiMessage({
-                    type: 'warning', //
-                    text: error.response.data.message || "Email của bạn chưa được xác thực. Vui lòng kiểm tra hộp thư để hoàn tất xác thực."
-                 });
+            if (response.requiresTwoFactor) {
+                // Xử lý 2FA như cũ
+                setApiMessage({ type: 'info', text: response.message || "Yêu cầu xác thực 2 lớp..." });
+                setTimeout(() => {
+                    navigate('/verify-2fa', { state: { email: formData.email, message: response.message } });
+                }, 1500);
+            } else if (response.token && response.user) {
+                // Đăng nhập thành công!
+                setApiMessage({ type: 'success', text: response.message || "Đăng nhập thành công!" });
+                // GỌI HÀM CỦA CONTEXT
+                auth.loginAction(response); 
+                
+                // KHÔNG navigate ở đây nữa. App.js sẽ tự động điều hướng.
+                // setTimeout(() => {
+                //     navigate('/profile/info'); 
+                // }, 1500); // <-- XÓA HOẶC COMMENT OUT KHỐI NÀY
             } else {
-                 setApiMessage({
-                    type: 'error',
-                    text: error.response.data.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.'
-                 });
+                setApiMessage({ type: 'error', text: response?.message || 'Lỗi không xác định.' });
             }
-        } else if (error.message) { // Lỗi mạng hoặc lỗi client-side khác
-            setApiMessage({ type: 'error', text: error.message });
-        } else { // Lỗi không xác định
-            setApiMessage({ type: 'error', text: 'Đăng nhập thất bại. Vui lòng thử lại.' });
-        }
-      } finally {
-        setIsLoading(false);
-      }
+        } catch (error) {
+            // ... (khối catch giữ nguyên logic hiển thị lỗi) ...
+            if (error.response && error.response.data) {
+                if (error.response.data.requireEmailConfirmation) {
+                      setApiMessage({ type: 'warning', text: error.response.data.message || "Email chưa được xác thực." });
+                } else {
+                      setApiMessage({ type: 'error', text: error.response.data.message || 'Đăng nhập thất bại.' });
+                }
+            } else {
+                setApiMessage({ type: 'error', text: 'Đăng nhập thất bại. Vui lòng thử lại.' });
+            }
+        } finally {
+            setIsLoading(false);
+          }
     }
   };
 

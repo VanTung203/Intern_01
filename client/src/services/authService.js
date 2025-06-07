@@ -68,44 +68,32 @@ export const resetPassword = async (resetData) => {
 
 /**
  * Gửi yêu cầu đăng nhập.
- * @param {object} credentials - Dữ liệu đăng nhập (ví dụ: { email, password })
- * @returns {Promise<object>} Promise chứa dữ liệu phản hồi (ví dụ: token).
+ * @param {object} credentials - Dữ liệu đăng nhập
+ * @returns {Promise<object>} Promise chứa dữ liệu phản hồi (bao gồm token, user, requiresTwoFactor)
  */
 export const login = async (credentials) => {
   try {
     const response = await apiClient.post('/api/auth/login', credentials);
-    // KIỂM TRA XEM CÓ YÊU CẦU 2FA KHÔNG
-    if (response.data && response.data.requiresTwoFactor) {
-      return { requiresTwoFactor: true, email: response.data.email, message: response.data.message }; // Trả về đối tượng chỉ thị 2FA
-    }
-
-    // Nếu không yêu cầu 2FA, xử lý token như bình thường
-    if (response.data && response.data.token) {
-      localStorage.setItem('authToken', response.data.token);
-      setGlobalAuthHeader(response.data.token);
-      return { token: response.data.token, expiresIn: response.data.expiresIn, message: response.data.message }; // Trả về token
-    }
-    // Trường hợp không có token và cũng không yêu cầu 2FA (lỗi logic server)
-    throw new Error(response.data?.message || 'Đăng nhập không thành công, không nhận được token.');
+    // Chỉ cần trả về dữ liệu. KHÔNG xử lý localStorage hay header ở đây nữa.
+    return response.data; 
   } catch (error) {
     console.error("API Error - Login in authService:", error.response?.data || error.message);
-    localStorage.removeItem('authToken');
-    setGlobalAuthHeader(null);
+    // Không cần xóa token ở đây nữa vì service không set token
     throw error;
   }
 };
 
-// >>> HÀM XÁC THỰC OTP 2FA <<<
+/**
+ * Gửi yêu cầu xác thực OTP 2FA.
+ * @param {string} email
+ * @param {string} otpCode
+ * @returns {Promise<object>} Promise chứa dữ liệu phản hồi (bao gồm token, user)
+ */
 export const verifyTwoFactorOtp = async (email, otpCode) => {
   try {
     const response = await apiClient.post('/api/auth/verify-2fa', { email, otpCode });
-    // Sau khi xác thực OTP thành công, backend sẽ trả về token
-    if (response.data && response.data.token) {
-      // Không cần lưu token ở đây, TwoFactorAuthForm sẽ làm
-      return response.data;
-    }
-    // Trường hợp API trả về 200 OK nhưng không có token
-    throw new Error(response.data?.message || 'Xác thực OTP không thành công, không nhận được token.');
+    // Chỉ trả về dữ liệu. KHÔNG xử lý localStorage hay header ở đây nữa.
+    return response.data;
   } catch (error) {
     console.error("API Error - Verify 2FA OTP in authService:", error.response?.data || error.message);
     throw error;
@@ -131,15 +119,12 @@ export const changePassword = async (passwordData) => {
 /**
  * Xử lý đăng xuất người dùng.
  */
+/**
+ * Hàm logout giờ đây trống vì AuthContext sẽ xử lý việc xóa state phía client.
+ * Có thể giữ lại để gọi API logout của backend nếu có trong tương lai.
+ */
 export const logout = () => {
-  localStorage.removeItem('authToken');
-  setGlobalAuthHeader(null); // Sử dụng hàm set header toàn cục để xóa token khỏi apiClient
-  // TODO: Cân nhắc gọi API logout ở backend nếu có để vô hiệu hóa token phía server (nếu cần thiết).
-  // Ví dụ:
-  // try {
-  //   await apiClient.post('/api/auth/logout');
-  // } catch (error) {
-  //   console.error("API Error - Logout (optional):", error.response?.data || error.message);
-  // }
-  console.log("User logged out via authService, global auth header cleared.");
+  // localStorage.removeItem('authToken'); // <- XÓA DÒNG NÀY
+  // setGlobalAuthHeader(null); // <- XÓA DÒNG NÀY
+  console.log("Logout triggered. AuthContext will handle state clearance.");
 };

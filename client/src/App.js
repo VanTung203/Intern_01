@@ -1,6 +1,8 @@
 // client/src/App.js
 import React, { useEffect } from 'react'; // Thêm useEffect
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+// import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom'; 
+import { useAuth } from './context/AuthContext';
 
 // Layouts
 import PublicPageLayout from './components/layouts/PublicPageLayout';
@@ -22,33 +24,30 @@ import UserProfilePage from './pages/UserProfilePage';
 import UserProfileInfoForm from './components/User/UserProfileInfoForm';
 import UserSecurityContent from './components/User/UserSecurityContent';
 
-import { Typography, Box } from '@mui/material'; // << THÊM Box VÀO ĐÂY
+// Admin Pages
+import UserListPage from './pages/admin/UserListPage';
+
+// Routing Components
+import PrivateRoute from './components/routing/PrivateRoute'; // THÊM IMPORT NÀY
+import AdminRoute from './components/routing/AdminRoute';   // THÊM IMPORT NÀY
+
+import { Typography, Box, CircularProgress } from '@mui/material'; // << THÊM Box VÀO ĐÂY
 
 import { setGlobalAuthHeader } from './api/apiClient';
 
-// Component bảo vệ Route
-const PrivateRoute = ({ children }) => {
-  const token = localStorage.getItem('authToken');
-  // Có thể thêm logic kiểm tra token hết hạn ở đây nếu cần
-  return token ? children : <Navigate to="/login" replace />;
-};
-
 function App() {
-  // useEffect để thiết lập header xác thực khi ứng dụng tải lần đầu
-  useEffect(() => {
-    const token = localStorage.getItem('authToken');
-    if (token) {
-      setGlobalAuthHeader(token); // Gọi hàm để set header cho apiClient toàn cục
-      // Nếu không dùng apiClient chung:
-      // import { setAuthHeader as setAuthServiceHeader } from './services/authService';
-      // import { setUserAuthHeader as setUserServiceHeader } from './services/userService';
-      // setAuthServiceHeader(token);
-      // setUserServiceHeader(token);
-    }
-  }, []); // Mảng rỗng đảm bảo useEffect này chỉ chạy một lần khi component App mount
+  const { isAuthenticated, user, isLoading } = useAuth();
+    
+  // Hiển thị loading cho toàn bộ ứng dụng trong khi chờ xác thực
+  if (isLoading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
-    <Router>
       <Routes>
         {/* Public Routes: Không cần DashboardLayout, có thể có PublicPageLayout nếu RegisterPage không tự chứa layout */}
         {/* Nếu RegisterPage và LoginPage đã dùng PublicPageLayout bên trong chúng thì không cần bọc ở đây */}
@@ -62,20 +61,35 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/verify-2fa" element={<TwoFactorAuthPage />} />
 
-        {/* Private Routes using DashboardLayout */}
-        {/* Cách tiếp cận 1: Bọc DashboardLayout bằng PrivateRoute */}
-        <Route element={<PrivateRoute><DashboardLayout /></PrivateRoute>}>
-          <Route path="/profile" element={<UserProfilePage />}> {/* UserProfilePage sẽ chứa <Outlet/> cho các tab con */}
-            <Route index element={<Navigate to="info" replace />} />
-            <Route path="info" element={<UserProfileInfoForm />} />
-            <Route path="security" element={<UserSecurityContent />} />
+        {/* User Private Routes */}
+        <Route element={<PrivateRoute />}>
+          <Route element={<DashboardLayout />}>
+            <Route path="/profile" element={<UserProfilePage />}>
+              <Route index element={<Navigate to="info" replace />} />
+              <Route path="info" element={<UserProfileInfoForm />} />
+              <Route path="security" element={<UserSecurityContent />} />
+            </Route>
+            {/* Các trang khác của user có thể thêm ở đây */}
           </Route>
-          {/* Ví dụ một trang dashboard khác */}
-          {/* <Route path="/dashboard" element={<DashboardHomePage />} /> */}
+        </Route>
+
+        {/* Admin Private Routes */}
+        <Route element={<AdminRoute />}>
+          <Route element={<DashboardLayout />}>
+            <Route path="/admin/users" element={<UserListPage />} />
+            {/* Các trang khác của admin có thể thêm ở đây */}
+          </Route>
         </Route>
 
         {/* Route mặc định */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route 
+          path="/" 
+          element={
+            isAuthenticated 
+              ? (user?.roles?.includes('Admin') ? <Navigate to="/admin/users" replace /> : <Navigate to="/profile" replace />)
+              : <Navigate to="/login" replace />
+          } 
+        />
 
         {/* Trang 404 */}
         <Route path="*" element={
@@ -88,7 +102,6 @@ function App() {
           </PublicPageLayout>
         } />
       </Routes>
-    </Router>
   );
 }
 
