@@ -8,6 +8,7 @@ import {
 } from '@mui/material';
 import { getAllUsers } from '../../services/userService';
 import UserCreateDialog from '../../components/admin/UserCreateDialog';
+import UserDetailsDialog from '../../components/admin/UserDetailsDialog';
 
 // Import các icons cần thiết
 import MoreVertIcon from '@mui/icons-material/MoreVert';
@@ -40,10 +41,11 @@ const UserListPage = () => {
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
 
-    // STATE CHO DIALOG
+    // THÊM STATE MỚI CHO DIALOG CHI TIẾT
     const [openCreateDialog, setOpenCreateDialog] = useState(false);
+    const [openDetailsDialog, setOpenDetailsDialog] = useState(false);
 
-    // SỬA LẠI useEffect ĐỂ GỌI API
+    // GỌI API
     // Dùng useCallback để tránh fetchUsers được tạo lại không cần thiết
     const fetchUsers = useCallback(async () => {
         try {
@@ -62,7 +64,8 @@ const UserListPage = () => {
         fetchUsers();
     }, [fetchUsers]);
 
-    // --- Các hàm xử lý sự kiện ---
+// --- Các hàm xử lý sự kiện ---
+
     // - CÁC HÀM ĐỂ XỬ LÝ SỰ KIỆN TÌM KIẾM -
     // Cập nhật giá trị của ô input khi người dùng đang gõ
     const handleSearchChange = (event) => {
@@ -94,7 +97,7 @@ const UserListPage = () => {
 
     const handleMenuClose = () => {
         setAnchorEl(null);
-        setSelectedUser(null);
+        // setSelectedUser(null);
     };
 
     const handleChangePage = (event, newPage) => {
@@ -119,6 +122,18 @@ const UserListPage = () => {
         // Cập nhật danh sách người dùng ở client để không cần gọi lại API
         setUsers(currentUsers => [newUser, ...currentUsers]);
         // (Tùy chọn) Có thể thêm thông báo thành công ở đây (Snackbar)
+    };
+
+    // --- HÀM XỬ LÝ CHO DIALOG XEM CHI TIẾT ---
+    const handleOpenDetailsDialog = () => {
+        // `selectedUser` đã được set khi mở menu
+        setOpenDetailsDialog(true);
+        setAnchorEl(null); // Đóng menu lại
+    };
+    const handleCloseDetailsDialog = () => {
+        setOpenDetailsDialog(false);
+        // Reset selectedUser ở đây là tốt nhất, vì dialog chi tiết không còn cần nó nữa
+        setSelectedUser(null); 
     };
 
     // --- Các hàm render phụ ---
@@ -281,7 +296,7 @@ const UserListPage = () => {
                 open={Boolean(anchorEl)}
                 onClose={handleMenuClose}
             >
-                <MenuItem onClick={handleMenuClose}>
+                <MenuItem onClick={handleOpenDetailsDialog}>
                     <ListItemIcon>
                         <InfoIcon fontSize="small" />
                     </ListItemIcon>
@@ -316,11 +331,18 @@ const UserListPage = () => {
                 </MenuItem>
             </Menu>
 
-            {/* --- RENDER DIALOG MỚI --- */}
+            {/* Dialog tạo user */}
             <UserCreateDialog
                 open={openCreateDialog}
                 onClose={handleCloseCreateDialog}
                 onUserCreated={handleUserCreated}
+            />
+
+            {/* THÊM MỚI: Dialog xem chi tiết */}
+            <UserDetailsDialog
+                open={openDetailsDialog}
+                onClose={handleCloseDetailsDialog}
+                user={selectedUser}
             />
         </Box>
     );
