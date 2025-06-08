@@ -64,3 +64,15 @@ export const getAllUsers = async () => {
     throw error;
   }
 };
+
+// Chức năng tạo tài khoản (của Admin)
+export const createUserByAdmin = async (userData) => {
+  try {
+    // API này cần token của Admin để xác thực
+    const response = await apiClient.post('/api/user/create', userData);
+    return response.data; // Mong đợi { message: "...", user: {...} }
+  } catch (error) {
+    console.error("API Error - Create User in userService:", error.response?.data || error.message);
+    throw error;
+  }
+};

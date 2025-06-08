@@ -7,6 +7,7 @@ import {
     ListItemIcon, ListItemText
 } from '@mui/material';
 import { getAllUsers } from '../../services/userService';
+import UserCreateDialog from '../../components/admin/UserCreateDialog';
 
 // Import các icons cần thiết
 import MoreVertIcon from '@mui/icons-material/MoreVert';
@@ -33,6 +34,9 @@ const UserListPage = () => {
     const [selectedUser, setSelectedUser] = useState(null); // User đang được chọn
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
+
+    // STATE CHO DIALOG
+    const [openCreateDialog, setOpenCreateDialog] = useState(false);
 
     useEffect(() => {
         const fetchUsers = async () => {
@@ -70,6 +74,21 @@ const UserListPage = () => {
         setPage(0);
     };
     
+    // --- CÁC HÀM ĐỂ XỬ LÝ DIALOG ---
+    const handleOpenCreateDialog = () => {
+        setOpenCreateDialog(true);
+    };
+
+    const handleCloseCreateDialog = () => {
+        setOpenCreateDialog(false);
+    };
+
+    const handleUserCreated = (newUser) => {
+        // Cập nhật danh sách người dùng ở client để không cần gọi lại API
+        setUsers(currentUsers => [newUser, ...currentUsers]);
+        // (Tùy chọn) Có thể thêm thông báo thành công ở đây (Snackbar)
+    };
+
     // --- Các hàm render phụ ---
     const renderStatus = (user) => {
         if (user.lockoutEnd && new Date(user.lockoutEnd) > new Date()) {
@@ -133,6 +152,7 @@ const UserListPage = () => {
                 <Box>
                     <Button 
                         variant="contained"
+                        onClick={handleOpenCreateDialog}
                         sx={{
                             height: 40,
                             mr: 90,
@@ -140,14 +160,13 @@ const UserListPage = () => {
                             color: 'white', // Màu chữ trắng
                             fontSize: '0.85rem',
                             '&:hover': {
-                            backgroundColor: '#454F5B', // Màu đậm hơn khi hover
-                            
+                                backgroundColor: '#454F5B', // Màu đậm hơn khi hover  
                             },
-                        }} 
+                        }}
                         startIcon={<AddIcon />}>
                         Thêm tài khoản mới
                     </Button>
-                     <FormControl size="small" sx={{minWidth: 200, mr: 2}}>
+                    <FormControl size="small" sx={{minWidth: 200, mr: 2}}>
                         <InputLabel>Trạng thái</InputLabel>
                         <Select
                             label="Trạng thái"
@@ -257,6 +276,13 @@ const UserListPage = () => {
                         Xóa tài khoản </ListItemText>
                 </MenuItem>
             </Menu>
+
+            {/* --- RENDER DIALOG MỚI --- */}
+            <UserCreateDialog
+                open={openCreateDialog}
+                onClose={handleCloseCreateDialog}
+                onUserCreated={handleUserCreated}
+            />
         </Box>
     );
 };

@@ -1,5 +1,6 @@
 // IdentityServerAPI/Controllers/UserController.cs
 using IdentityServerAPI.DTOs.User;
+using IdentityServerAPI.DTOs.Admin;
 using IdentityServerAPI.Models;
 using IdentityServerAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -163,12 +164,23 @@ namespace IdentityServerAPI.Controllers
         {
             return await _userService.DisableTwoFactorAuthAsync(User);
         }
-        
+
         [HttpGet("all")] // Route: GET /api/user/all
         [Authorize(Roles = "Admin")] // <-- RẤT QUAN TRỌNG: Chỉ người dùng có vai trò "Admin" mới được truy cập
         public async Task<IActionResult> GetAllUsers()
         {
             return await _userService.GetAllUsersAsync();
+        }
+        
+        [HttpPost("create")] // Route: POST /api/user/create
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> CreateUser([FromBody] CreateUserDto model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            return await _userService.CreateUserAsync(model);
         }
     }
 }

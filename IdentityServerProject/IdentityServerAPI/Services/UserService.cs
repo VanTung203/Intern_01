@@ -1,5 +1,6 @@
 // IdentityServerAPI/Services/UserService.cs
 using IdentityServerAPI.DTOs.User;
+using IdentityServerAPI.DTOs.Admin;
 using IdentityServerAPI.Models;
 using IdentityServerAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
@@ -157,6 +158,61 @@ namespace IdentityServerAPI.Services
             }
 
             return new OkObjectResult(userDtos);
+        }
+
+        public async Task<IActionResult> CreateUserAsync(CreateUserDto model)
+        {
+            // 1. Kiểm tra xem vai trò có hợp lệ không ("Admin" hoặc "User")
+            if (model.Role != "Admin" && model.Role != "User")
+            {
+                return new BadRequestObjectResult(new { message = "Vai trò được chọn không hợp lệ." });
+            }
+
+            // 2. Kiểm tra xem email đã tồn tại chưa
+            var userExists = await _userManager.FindByEmailAsync(model.Email);
+            if (userExists != null)
+            {
+                return new ConflictObjectResult(new { message = "Địa chỉ email này đã được sử dụng." });
+            }
+
+            // 3. Tạo đối tượng ApplicationUser
+            var user = new ApplicationUser
+            {
+                UserName = model.Email,
+                Email = model.Email,
+                FirstName = model.FirstName,
+                LastName = model.LastName,
+                EmailConfirmed = true, // Admin tạo thì mặc định xác thực luôn
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+            };
+
+            // 4. Tạo người dùng với mật khẩu
+            var result = await _userManager.CreateAsync(user, model.Password);
+
+            if (!result.Succeeded)
+            {
+                // Trả về lỗi nếu không tạo được user (ví dụ: mật khẩu yếu)
+                return new BadRequestObjectResult(new { title = "Không thể tạo người dùng.", errors = result.Errors });
+            }
+
+            // 5. Gán vai trò cho người dùng
+            await _userManager.AddToRoleAsync(user, model.Role);
+
+            _logger.LogInformation("Admin created a new account with email {Email} and role {Role}", user.Email, model.Role);
+
+            // 6. (Tùy chọn) Trả về thông tin người dùng vừa tạo
+            var createdUserDto = new UserProfileDto
+            {
+                Id = user.Id.ToString(),
+                Email = user.Email,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                EmailConfirmed = user.EmailConfirmed,
+                Roles = new List<string> { model.Role }
+            };
+
+            return new OkObjectResult(new { message = "Tạo tài khoản thành công!", user = createdUserDto });
         }
     }
 }

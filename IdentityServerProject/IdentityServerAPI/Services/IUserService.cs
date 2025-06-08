@@ -1,5 +1,6 @@
 // IdentityServerAPI/Services/Interfaces/IUserService.cs
 using IdentityServerAPI.DTOs.User;
+using IdentityServerAPI.DTOs.Admin;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
@@ -12,5 +13,7 @@ namespace IdentityServerAPI.Services.Interfaces
         Task<IActionResult> EnableTwoFactorAuthAsync(ClaimsPrincipal userPrincipal);
         Task<IActionResult> DisableTwoFactorAuthAsync(ClaimsPrincipal userPrincipal);
         Task<IActionResult> GetAllUsersAsync();
+
+        Task<IActionResult> CreateUserAsync(CreateUserDto model);
     }
 }

@@ -59,6 +59,7 @@ const theme = createTheme({
     h4: { fontWeight: 700, fontSize: '1.75rem', lineHeight: 1.5 },
     h5: { fontWeight: 700, fontSize: '1.5rem', lineHeight: 1.5 }, // Có thể dùng cho "Đăng ký tài khoản"
     h6: { fontWeight: 400, fontSize: '1.125rem', lineHeight: 1.6, color: GREY[600] }, // Mô tả dưới "Vietbando, Xin Chào!"
+    h7: { fontWeight: 400, fontSize: '1.5rem', lineHeight: 1.6, color: GREY[600] },
 
     subtitle1: { fontWeight: 600, fontSize: '1rem', lineHeight: 1.5 },
     subtitle2: { fontWeight: 500, fontSize: '0.875rem', lineHeight: 1.5, color: GREY[600] }, // "Đã có tài khoản?"
