@@ -17,5 +17,6 @@ namespace IdentityServerAPI.Services.Interfaces
         Task<IActionResult> ResetPasswordByAdminAsync(string targetUserId, AdminResetPasswordDto model);
         Task<IActionResult> LockUserAsync(string targetUserId);
         Task<IActionResult> UnlockUserAsync(string targetUserId);
+        Task<IActionResult> DeleteUserAsync(string targetUserId);
     }
 }

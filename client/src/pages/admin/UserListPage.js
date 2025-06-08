@@ -6,10 +6,11 @@ import {
     InputAdornment, TextField, Button, Select, FormControl, InputLabel,
     ListItemIcon, ListItemText
 } from '@mui/material';
-import { getAllUsers, lockUser, unlockUser } from '../../services/userService';
+import { getAllUsers, lockUser, unlockUser, deleteUser } from '../../services/userService';
 import UserCreateDialog from '../../components/admin/UserCreateDialog';
 import UserDetailsDialog from '../../components/admin/UserDetailsDialog';
 import UserResetPasswordDialog from '../../components/admin/UserResetPasswordDialog';
+import UserDeleteConfirmDialog from '../../components/admin/UserDeleteConfirmDialog';
 
 // Import các icons cần thiết
 import MoreVertIcon from '@mui/icons-material/MoreVert';
@@ -47,7 +48,10 @@ const UserListPage = () => {
     const [openCreateDialog, setOpenCreateDialog] = useState(false);
     const [openDetailsDialog, setOpenDetailsDialog] = useState(false);
     const [openResetPasswordDialog, setOpenResetPasswordDialog] = useState(false);
-    
+    const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+    const [isSubmittingAction, setIsSubmittingAction] = useState(false);
+    const [actionError, setActionError] = useState('');
+
     // GỌI API
     // Dùng useCallback để tránh fetchUsers được tạo lại không cần thiết
     const fetchUsers = useCallback(async () => {
@@ -147,6 +151,36 @@ const UserListPage = () => {
         setOpenResetPasswordDialog(false);
         setSelectedUser(null);
     };
+
+    // --- HÀM XỬ LÝ CHO DIALOG XÓA --- (MỚI)
+    const handleOpenDeleteDialog = () => {
+        setOpenDeleteDialog(true);
+        setAnchorEl(null); // Đóng menu
+    };
+
+    const handleCloseDeleteDialog = () => {
+        setOpenDeleteDialog(false);
+        setActionError(''); // Xóa lỗi khi đóng
+        setSelectedUser(null);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!selectedUser) return;
+
+        setIsSubmittingAction(true);
+        setActionError('');
+        try {
+            await deleteUser(selectedUser.id);
+            // Cập nhật UI bằng cách lọc ra người dùng đã bị xóa
+            setUsers(currentUsers => currentUsers.filter(user => user.id !== selectedUser.id));
+            handleCloseDeleteDialog(); // Đóng dialog sau khi thành công
+        } catch (error) {
+            setActionError(error.response?.data?.message || 'Không thể xóa tài khoản.');
+        } finally {
+            setIsSubmittingAction(false);
+        }
+    };
+
 
     // --- HÀM XỬ LÝ CHO VIỆC KHÓA/MỞ KHÓA TÀI KHOẢN ---
     const handleToggleLockUser = async () => {
@@ -376,7 +410,7 @@ const UserListPage = () => {
                     </MenuItem>
                 )}
 
-                <MenuItem onClick={handleMenuClose} sx={{  }}>
+                <MenuItem onClick={handleOpenDeleteDialog} sx={{  }}>
                     <ListItemIcon>
                         <DeleteIcon fontSize="small" color="error" /> {/* Icon màu đỏ */}
                     </ListItemIcon>
@@ -409,6 +443,16 @@ const UserListPage = () => {
                 open={openResetPasswordDialog}
                 onClose={handleCloseResetPasswordDialog}
                 user={selectedUser}
+            />
+
+            {/* RENDER DIALOG XÁC NHẬN XÓA */}
+            <UserDeleteConfirmDialog
+                open={openDeleteDialog}
+                onClose={handleCloseDeleteDialog}
+                onConfirm={handleConfirmDelete}
+                user={selectedUser}
+                isSubmitting={isSubmittingAction}
+                error={actionError}
             />
         </Box>
     );

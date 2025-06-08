@@ -117,3 +117,13 @@ export const unlockUser = async (userId) => {
     throw error;
   }
 };
+
+export const deleteUser = async (userId) => {
+  try {
+    const response = await apiClient.delete(`/api/user/${userId}`);
+    return response.data; // Mong đợi { message: "..." }
+  } catch (error) {
+    console.error("API Error - Delete User in userService:", error.response?.data || error.message);
+    throw error;
+  }
+};

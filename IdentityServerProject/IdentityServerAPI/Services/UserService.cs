@@ -307,5 +307,27 @@ namespace IdentityServerAPI.Services
             _logger.LogInformation("User {UserId} was unlocked by an admin.", user.Id);
             return new OkObjectResult(new { message = "Tài khoản đã được mở khóa thành công." });
         }
+
+        public async Task<IActionResult> DeleteUserAsync(string targetUserId)
+        {
+            var user = await _userManager.FindByIdAsync(targetUserId);
+            if (user == null)
+            {
+                return new NotFoundObjectResult(new { message = "Không tìm thấy người dùng." });
+            }
+
+            // TODO: Cân nhắc thêm logic kiểm tra không cho phép Admin tự xóa chính mình ở đây
+            // Ví dụ: if (adminPrincipal.GetUserId() == targetUserId) return BadRequest(...)
+
+            var result = await _userManager.DeleteAsync(user);
+
+            if (!result.Succeeded)
+            {
+                return new BadRequestObjectResult(new { title = "Không thể xóa tài khoản.", errors = result.Errors });
+            }
+
+            _logger.LogInformation("User {UserId} was deleted by an admin.", user.Id);
+            return new OkObjectResult(new { message = "Tài khoản đã được xóa thành công." });
+        }
     }
 }

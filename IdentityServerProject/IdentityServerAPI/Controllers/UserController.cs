@@ -193,7 +193,7 @@ namespace IdentityServerAPI.Controllers
             }
             return await _userService.ResetPasswordByAdminAsync(userId, model);
         }
-        
+
         [HttpPost("{userId}/lock")] // Route: POST /api/user/{userId}/lock
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> LockUser(string userId)
@@ -206,6 +206,14 @@ namespace IdentityServerAPI.Controllers
         public async Task<IActionResult> UnlockUser(string userId)
         {
             return await _userService.UnlockUserAsync(userId);
+        }
+        
+        [HttpDelete("{userId}")] // Route: DELETE /api/user/{userId}
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> DeleteUser(string userId)
+        {
+            // TODO: Cân nhắc thêm logic kiểm tra không cho phép Admin tự xóa chính mình ở đây
+            return await _userService.DeleteUserAsync(userId);
         }
     }
 }
