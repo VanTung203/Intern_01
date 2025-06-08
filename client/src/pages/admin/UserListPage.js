@@ -1,5 +1,5 @@
 // client/src/pages/admin/UserListPage.js
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
     Box, Typography, CircularProgress, Alert, Paper, Table, TableBody, TableCell,
     TableContainer, TableHead, TableRow, Chip, Avatar, IconButton, Menu, MenuItem,
@@ -29,6 +29,10 @@ const UserListPage = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
+    // CÁC STATE CHO TÌM KIẾM
+    const [searchTerm, setSearchTerm] = useState(''); // Giá trị đang gõ trong ô input
+    const [appliedSearch, setAppliedSearch] = useState(''); // Giá trị đã được áp dụng để tìm kiếm
+
     // State cho việc tương tác với UI (menu, filter, search, pagination)
     const [anchorEl, setAnchorEl] = useState(null); // Để mở menu thao tác
     const [selectedUser, setSelectedUser] = useState(null); // User đang được chọn
@@ -38,23 +42,44 @@ const UserListPage = () => {
     // STATE CHO DIALOG
     const [openCreateDialog, setOpenCreateDialog] = useState(false);
 
-    useEffect(() => {
-        const fetchUsers = async () => {
-            try {
-                setLoading(true);
-                const data = await getAllUsers();
-                setUsers(data);
-            } catch (err) {
-                setError(err.response?.data?.message || 'Không thể tải danh sách người dùng.');
-            } finally {
-                setLoading(false);
-            }
-        };
+    // SỬA LẠI useEffect ĐỂ GỌI API
+    // Dùng useCallback để tránh fetchUsers được tạo lại không cần thiết
+    const fetchUsers = useCallback(async () => {
+        try {
+            setLoading(true);
+            // Gọi API với từ khóa tìm kiếm đã được áp dụng
+            const data = await getAllUsers(appliedSearch);
+            setUsers(data);
+        } catch (err) {
+            setError(err.response?.data?.message || 'Không thể tải danh sách người dùng.');
+        } finally {
+            setLoading(false);
+        }
+    }, [appliedSearch]); // Chỉ chạy lại khi 'appliedSearch' thay đổi
 
+    useEffect(() => {
         fetchUsers();
-    }, []);
+    }, [fetchUsers]);
 
     // --- Các hàm xử lý sự kiện ---
+    // - CÁC HÀM ĐỂ XỬ LÝ SỰ KIỆN TÌM KIẾM -
+    // Cập nhật giá trị của ô input khi người dùng đang gõ
+    const handleSearchChange = (event) => {
+        setSearchTerm(event.target.value);
+    };
+    // Hàm chung để thực hiện hành động tìm kiếm (THÊM MỚI)
+    const applySearchFilter = () => {
+        setPage(0); // Reset về trang đầu tiên khi tìm kiếm mới
+        setAppliedSearch(searchTerm);
+    };
+    // Bắt sự kiện khi người dùng nhấn Enter.
+    const handleSearchKeyDown = (event) => {
+        if (event.key === 'Enter') {
+            applySearchFilter();
+        }
+    };
+    // ----------
+
     const handleMenuOpen = (event, user) => {
         setAnchorEl(event.currentTarget);
         setSelectedUser(user);
@@ -140,14 +165,20 @@ const UserListPage = () => {
                     variant="outlined"
                     size="small"
                     placeholder="Email, Số điện thoại"
+                    value={searchTerm}
+                    onChange={handleSearchChange}
+                    onKeyDown={handleSearchKeyDown}
                     InputProps={{
                         startAdornment: (
                             <InputAdornment position="start">
-                                <SearchIcon />
+                                {/* Bọc icon trong IconButton và thêm onClick */}
+                                <IconButton onClick={applySearchFilter} edge="start">
+                                    <SearchIcon />
+                                </IconButton>
                             </InputAdornment>
                         ),
                     }}
-                    sx={{ width: '18%' }}
+                    sx={{ width: '18%' }} // Tăng độ rộng một chút
                 />
                 <Box>
                     <Button 

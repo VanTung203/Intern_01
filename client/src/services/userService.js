@@ -55,9 +55,14 @@ export const disableTwoFactor = async () => {
   }
 };
 
-export const getAllUsers = async () => {
+// Tìm kiếm tài khoản
+export const getAllUsers = async (searchQuery) => {
   try {
-    const response = await apiClient.get('/api/user/all');
+    // Sử dụng 'params' để axios tự động thêm query string vào URL
+    // Ví dụ: /api/user/all?searchQuery=...
+    const response = await apiClient.get('/api/user/all', { 
+        params: { searchQuery } 
+    });
     return response.data;
   } catch (error) {
     console.error("API Error - Get All Users in userService:", error.response?.data || error.message);

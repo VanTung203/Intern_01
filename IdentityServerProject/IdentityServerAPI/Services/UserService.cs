@@ -132,13 +132,25 @@ namespace IdentityServerAPI.Services
             return new OkObjectResult(new { message = "Xác thực 2 lớp đã được tắt." });
         }
 
-        public async Task<IActionResult> GetAllUsersAsync()
+        public async Task<IActionResult> GetAllUsersAsync(string? searchQuery)
         {
-            // Lấy tất cả người dùng. ToListAsync() để thực thi câu truy vấn.
-            var users = _userManager.Users.ToList();
+            // Bắt đầu với một IQueryable
+            var query = _userManager.Users.AsQueryable();
+
+            // Nếu có từ khóa tìm kiếm, áp dụng bộ lọc
+            if (!string.IsNullOrWhiteSpace(searchQuery))
+            {
+                var lowerCaseQuery = searchQuery.Trim().ToLower();
+                query = query.Where(u =>
+                    (u.Email != null && u.Email.ToLower().Contains(lowerCaseQuery)) ||
+                    (u.PhoneNumber != null && u.PhoneNumber.Contains(lowerCaseQuery)) // Tìm kiếm SĐT không cần ToLower
+                );
+            }
+
+            // Thực thi truy vấn để lấy danh sách người dùng (đã được lọc nếu có)
+            var users = query.ToList();
 
             var userDtos = new List<UserProfileDto>();
-
             foreach (var user in users)
             {
                 userDtos.Add(new UserProfileDto
@@ -152,7 +164,6 @@ namespace IdentityServerAPI.Services
                     LockoutEnd = user.LockoutEnd,
                     TwoFactorEnabled = user.TwoFactorEnabled,
                     AvatarUrl = user.AvatarUrl,
-                    // Lấy danh sách vai trò của từng người dùng
                     Roles = await _userManager.GetRolesAsync(user)
                 });
             }
