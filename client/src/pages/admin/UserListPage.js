@@ -29,9 +29,10 @@ const UserListPage = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
-    // CÁC STATE CHO TÌM KIẾM
+    // CÁC STATE CHO TÌM KIẾM, BỘ LỌC
     const [searchTerm, setSearchTerm] = useState(''); // Giá trị đang gõ trong ô input
     const [appliedSearch, setAppliedSearch] = useState(''); // Giá trị đã được áp dụng để tìm kiếm
+    const [statusFilter, setStatusFilter] = useState('all');
 
     // State cho việc tương tác với UI (menu, filter, search, pagination)
     const [anchorEl, setAnchorEl] = useState(null); // Để mở menu thao tác
@@ -47,15 +48,15 @@ const UserListPage = () => {
     const fetchUsers = useCallback(async () => {
         try {
             setLoading(true);
-            // Gọi API với từ khóa tìm kiếm đã được áp dụng
-            const data = await getAllUsers(appliedSearch);
+            // Gọi API với 2 từ khóa (tìm kiếm và lọc)
+            const data = await getAllUsers(appliedSearch, statusFilter);
             setUsers(data);
         } catch (err) {
             setError(err.response?.data?.message || 'Không thể tải danh sách người dùng.');
         } finally {
             setLoading(false);
         }
-    }, [appliedSearch]); // Chỉ chạy lại khi 'appliedSearch' thay đổi
+    }, [appliedSearch, statusFilter]); // Chỉ chạy lại khi 'appliedSearch' và statusFilter thay đổi
 
     useEffect(() => {
         fetchUsers();
@@ -78,8 +79,14 @@ const UserListPage = () => {
             applySearchFilter();
         }
     };
-    // ----------
+    
+    // --- HÀM MỚI ĐỂ XỬ LÝ SỰ KIỆN LỌC TRẠNG THÁI ---
+    const handleStatusFilterChange = (event) => {
+        setPage(0); // Reset về trang đầu tiên
+        setStatusFilter(event.target.value);
+    };
 
+    // ----------
     const handleMenuOpen = (event, user) => {
         setAnchorEl(event.currentTarget);
         setSelectedUser(user);
@@ -140,7 +147,7 @@ const UserListPage = () => {
         );
     };
 
-    // Slice data cho phân trang
+    // Phân trang giờ đây luôn được thực hiện sau khi backend trả về dữ liệu đã lọc
     const paginatedUsers = users.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
 
@@ -201,7 +208,8 @@ const UserListPage = () => {
                         <InputLabel>Trạng thái</InputLabel>
                         <Select
                             label="Trạng thái"
-                            defaultValue="all"
+                            value={statusFilter}
+                            onChange={handleStatusFilterChange}
                         >
                             <MenuItem value="all">Tất cả</MenuItem>
                             <MenuItem value="active">Đã xác thực</MenuItem>

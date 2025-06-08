@@ -167,9 +167,9 @@ namespace IdentityServerAPI.Controllers
 
         [HttpGet("all")] // Route: GET /api/user/all
         [Authorize(Roles = "Admin")] // <-- RẤT QUAN TRỌNG: Chỉ người dùng có vai trò "Admin" mới được truy cập
-        public async Task<IActionResult> GetAllUsers([FromQuery] string? searchQuery)
+        public async Task<IActionResult> GetAllUsers([FromQuery] string? searchQuery, [FromQuery] string? status)
         {
-            return await _userService.GetAllUsersAsync(searchQuery);
+            return await _userService.GetAllUsersAsync(searchQuery, status);
         }
         
         [HttpPost("create")] // Route: POST /api/user/create

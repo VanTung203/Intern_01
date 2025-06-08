@@ -132,22 +132,40 @@ namespace IdentityServerAPI.Services
             return new OkObjectResult(new { message = "Xác thực 2 lớp đã được tắt." });
         }
 
-        public async Task<IActionResult> GetAllUsersAsync(string? searchQuery)
+        public async Task<IActionResult> GetAllUsersAsync(string? searchQuery, string? status)
         {
-            // Bắt đầu với một IQueryable
             var query = _userManager.Users.AsQueryable();
 
-            // Nếu có từ khóa tìm kiếm, áp dụng bộ lọc
+            // 1. Lọc theo từ khóa tìm kiếm
             if (!string.IsNullOrWhiteSpace(searchQuery))
             {
                 var lowerCaseQuery = searchQuery.Trim().ToLower();
                 query = query.Where(u =>
                     (u.Email != null && u.Email.ToLower().Contains(lowerCaseQuery)) ||
-                    (u.PhoneNumber != null && u.PhoneNumber.Contains(lowerCaseQuery)) // Tìm kiếm SĐT không cần ToLower
+                    (u.PhoneNumber != null && u.PhoneNumber.Contains(lowerCaseQuery))
                 );
             }
 
-            // Thực thi truy vấn để lấy danh sách người dùng (đã được lọc nếu có)
+            // 2. Lọc theo trạng thái
+            if (!string.IsNullOrEmpty(status) && status != "all")
+            {
+                switch (status.ToLower())
+                {
+                    case "active":
+                        // Hoạt động: Đã xác thực và không bị khóa
+                        query = query.Where(u => u.EmailConfirmed && (u.LockoutEnd == null || u.LockoutEnd <= DateTimeOffset.UtcNow));
+                        break;
+                    case "inactive":
+                        // Chưa xác thực
+                        query = query.Where(u => !u.EmailConfirmed);
+                        break;
+                    case "locked":
+                        // Bị khóa
+                        query = query.Where(u => u.LockoutEnd != null && u.LockoutEnd > DateTimeOffset.UtcNow);
+                        break;
+                }
+            }
+
             var users = query.ToList();
 
             var userDtos = new List<UserProfileDto>();
