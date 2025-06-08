@@ -96,3 +96,24 @@ export const resetPasswordByAdmin = async (userId, passwordData) => {
     throw error;
   }
 };
+
+// Gọi API cho chức năng Khóa/ Mở khóa tài khoản
+export const lockUser = async (userId) => {
+  try {
+    const response = await apiClient.post(`/api/user/${userId}/lock`);
+    return response.data; // Mong đợi { message: "..." }
+  } catch (error) {
+    console.error("API Error - Lock User in userService:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+export const unlockUser = async (userId) => {
+  try {
+    const response = await apiClient.post(`/api/user/${userId}/unlock`);
+    return response.data; // Mong đợi { message: "..." }
+  } catch (error) {
+    console.error("API Error - Unlock User in userService:", error.response?.data || error.message);
+    throw error;
+  }
+};

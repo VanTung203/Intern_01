@@ -15,5 +15,7 @@ namespace IdentityServerAPI.Services.Interfaces
         Task<IActionResult> GetAllUsersAsync(string? searchQuery, string? status); //searchQuery: tìm kiếm, status: lọc
         Task<IActionResult> CreateUserAsync(CreateUserDto model);
         Task<IActionResult> ResetPasswordByAdminAsync(string targetUserId, AdminResetPasswordDto model);
+        Task<IActionResult> LockUserAsync(string targetUserId);
+        Task<IActionResult> UnlockUserAsync(string targetUserId);
     }
 }

@@ -182,7 +182,7 @@ namespace IdentityServerAPI.Controllers
             }
             return await _userService.CreateUserAsync(model);
         }
-        
+
         [HttpPost("{userId}/admin-reset-password")] // Route: POST /api/user/{userId}/admin-reset-password
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> ResetPasswordByAdmin(string userId, [FromBody] AdminResetPasswordDto model)
@@ -192,6 +192,20 @@ namespace IdentityServerAPI.Controllers
                 return BadRequest(ModelState);
             }
             return await _userService.ResetPasswordByAdminAsync(userId, model);
+        }
+        
+        [HttpPost("{userId}/lock")] // Route: POST /api/user/{userId}/lock
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> LockUser(string userId)
+        {
+            return await _userService.LockUserAsync(userId);
+        }
+
+        [HttpPost("{userId}/unlock")] // Route: POST /api/user/{userId}/unlock
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> UnlockUser(string userId)
+        {
+            return await _userService.UnlockUserAsync(userId);
         }
     }
 }

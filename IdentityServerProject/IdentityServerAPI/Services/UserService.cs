@@ -267,5 +267,45 @@ namespace IdentityServerAPI.Services
             _logger.LogInformation("Password for user {UserId} was reset by an admin.", user.Id);
             return new OkObjectResult(new { message = "Đặt lại mật khẩu cho người dùng thành công." });
         }
+
+        public async Task<IActionResult> LockUserAsync(string targetUserId)
+        {
+            var user = await _userManager.FindByIdAsync(targetUserId);
+            if (user == null)
+            {
+                return new NotFoundObjectResult(new { message = "Không tìm thấy người dùng." });
+            }
+
+            // Đặt ngày hết hạn khóa là một ngày rất xa trong tương lai để khóa "vĩnh viễn"
+            var result = await _userManager.SetLockoutEndDateAsync(user, DateTimeOffset.MaxValue);
+
+            if (!result.Succeeded)
+            {
+                return new BadRequestObjectResult(new { title = "Không thể khóa tài khoản.", errors = result.Errors });
+            }
+
+            _logger.LogInformation("User {UserId} was locked out by an admin.", user.Id);
+            return new OkObjectResult(new { message = "Tài khoản đã được khóa thành công." });
+        }
+
+        public async Task<IActionResult> UnlockUserAsync(string targetUserId)
+        {
+            var user = await _userManager.FindByIdAsync(targetUserId);
+            if (user == null)
+            {
+                return new NotFoundObjectResult(new { message = "Không tìm thấy người dùng." });
+            }
+
+            // Đặt ngày hết hạn khóa về null hoặc một thời điểm trong quá khứ để mở khóa
+            var result = await _userManager.SetLockoutEndDateAsync(user, null);
+
+            if (!result.Succeeded)
+            {
+                return new BadRequestObjectResult(new { title = "Không thể mở khóa tài khoản.", errors = result.Errors });
+            }
+
+            _logger.LogInformation("User {UserId} was unlocked by an admin.", user.Id);
+            return new OkObjectResult(new { message = "Tài khoản đã được mở khóa thành công." });
+        }
     }
 }

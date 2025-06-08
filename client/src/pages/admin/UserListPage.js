@@ -6,7 +6,7 @@ import {
     InputAdornment, TextField, Button, Select, FormControl, InputLabel,
     ListItemIcon, ListItemText
 } from '@mui/material';
-import { getAllUsers } from '../../services/userService';
+import { getAllUsers, lockUser, unlockUser } from '../../services/userService';
 import UserCreateDialog from '../../components/admin/UserCreateDialog';
 import UserDetailsDialog from '../../components/admin/UserDetailsDialog';
 import UserResetPasswordDialog from '../../components/admin/UserResetPasswordDialog';
@@ -19,6 +19,7 @@ import AddIcon from '@mui/icons-material/Add';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import DoNotDisturbOnIcon from '@mui/icons-material/DoNotDisturbOn';
 import LockIcon from '@mui/icons-material/Lock';
+import LockOpenIcon from '@mui/icons-material/LockOpen';
 import { TablePagination } from '@mui/material';
 // Import các icons giao diện Thao tác
 import InfoIcon from '@mui/icons-material/Info'; 
@@ -66,7 +67,7 @@ const UserListPage = () => {
         fetchUsers();
     }, [fetchUsers]);
 
-// --- Các hàm xử lý sự kiện ---
+    // --- Các hàm xử lý sự kiện ---
 
     // - CÁC HÀM ĐỂ XỬ LÝ SỰ KIỆN TÌM KIẾM -
     // Cập nhật giá trị của ô input khi người dùng đang gõ
@@ -146,6 +147,44 @@ const UserListPage = () => {
         setOpenResetPasswordDialog(false);
         setSelectedUser(null);
     };
+
+    // --- HÀM XỬ LÝ CHO VIỆC KHÓA/MỞ KHÓA TÀI KHOẢN ---
+    const handleToggleLockUser = async () => {
+        if (!selectedUser) return;
+        
+        const isCurrentlyLocked = selectedUser.lockoutEnd && new Date(selectedUser.lockoutEnd) > new Date();
+        const action = isCurrentlyLocked ? unlockUser : lockUser;
+        const actionName = isCurrentlyLocked ? 'Mở khóa' : 'Khóa';
+        
+        // Đóng menu trước khi thực hiện hành động
+        handleMenuClose();
+
+        try {
+            await action(selectedUser.id);
+            // Cập nhật lại danh sách user ở client để thấy thay đổi ngay lập tức
+            setUsers(currentUsers =>
+                currentUsers.map(user => {
+                    if (user.id === selectedUser.id) {
+                        // Tạo một đối tượng mới với lockoutEnd đã được cập nhật
+                        return { 
+                            ...user, 
+                            lockoutEnd: isCurrentlyLocked ? null : new Date(8640000000000000).toISOString() // Ngày rất xa
+                        };
+                    }
+                    return user;
+                })
+            );
+            // (Tùy chọn) Thêm thông báo thành công ở đây (Snackbar)
+            // ví dụ: alert(`${actionName} tài khoản thành công!`);
+        } catch (error) {
+            // (Tùy chọn) Thêm thông báo lỗi ở đây
+            // ví dụ: alert(`Lỗi: Không thể ${actionName} tài khoản.`);
+            console.error(error);
+        } finally {
+            setSelectedUser(null);
+        }
+    };
+
 
     // --- Các hàm render phụ ---
     const renderStatus = (user) => {
@@ -321,12 +360,21 @@ const UserListPage = () => {
                     <ListItemText>Đặt lại mật khẩu</ListItemText>
                 </MenuItem>
 
-                <MenuItem onClick={handleMenuClose}>
-                    <ListItemIcon>
-                        <LockIcon fontSize="small" color="warning" />
-                    </ListItemIcon>
-                    <ListItemText>Khóa tài khoản</ListItemText>
-                </MenuItem>
+                {selectedUser && (
+                    <MenuItem onClick={handleToggleLockUser}>
+                        {selectedUser.lockoutEnd && new Date(selectedUser.lockoutEnd) > new Date() ? (
+                            <>
+                                <ListItemIcon><LockOpenIcon fontSize="small" color="success" /></ListItemIcon>
+                                <ListItemText>Mở khóa tài khoản</ListItemText>
+                            </>
+                        ) : (
+                            <>
+                                <ListItemIcon><LockIcon fontSize="small" color="warning" /></ListItemIcon>
+                                <ListItemText>Khóa tài khoản</ListItemText>
+                            </>
+                        )}
+                    </MenuItem>
+                )}
 
                 <MenuItem onClick={handleMenuClose} sx={{  }}>
                     <ListItemIcon>
