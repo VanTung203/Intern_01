@@ -9,6 +9,7 @@ import {
 import { getAllUsers } from '../../services/userService';
 import UserCreateDialog from '../../components/admin/UserCreateDialog';
 import UserDetailsDialog from '../../components/admin/UserDetailsDialog';
+import UserResetPasswordDialog from '../../components/admin/UserResetPasswordDialog';
 
 // Import các icons cần thiết
 import MoreVertIcon from '@mui/icons-material/MoreVert';
@@ -41,10 +42,11 @@ const UserListPage = () => {
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
 
-    // THÊM STATE MỚI CHO DIALOG CHI TIẾT
+    // Stase cho các Dialog 
     const [openCreateDialog, setOpenCreateDialog] = useState(false);
     const [openDetailsDialog, setOpenDetailsDialog] = useState(false);
-
+    const [openResetPasswordDialog, setOpenResetPasswordDialog] = useState(false);
+    
     // GỌI API
     // Dùng useCallback để tránh fetchUsers được tạo lại không cần thiết
     const fetchUsers = useCallback(async () => {
@@ -134,6 +136,15 @@ const UserListPage = () => {
         setOpenDetailsDialog(false);
         // Reset selectedUser ở đây là tốt nhất, vì dialog chi tiết không còn cần nó nữa
         setSelectedUser(null); 
+    };
+    const handleOpenResetPasswordDialog = () => {
+        setOpenResetPasswordDialog(true);
+        setAnchorEl(null); // Đóng menu lại
+    };
+
+    const handleCloseResetPasswordDialog = () => {
+        setOpenResetPasswordDialog(false);
+        setSelectedUser(null);
     };
 
     // --- Các hàm render phụ ---
@@ -303,7 +314,7 @@ const UserListPage = () => {
                     <ListItemText>Xem chi tiết</ListItemText>
                 </MenuItem>
 
-                 <MenuItem onClick={handleMenuClose}>
+                 <MenuItem onClick={handleOpenResetPasswordDialog}>
                     <ListItemIcon>
                         <LockResetIcon fontSize="small" />
                     </ListItemIcon>
@@ -338,10 +349,17 @@ const UserListPage = () => {
                 onUserCreated={handleUserCreated}
             />
 
-            {/* THÊM MỚI: Dialog xem chi tiết */}
+            {/* Dialog xem chi tiết */}
             <UserDetailsDialog
                 open={openDetailsDialog}
                 onClose={handleCloseDetailsDialog}
+                user={selectedUser}
+            />
+
+            {/* RENDER DIALOG ĐẶT LẠI MẬT KHẨU */}
+            <UserResetPasswordDialog
+                open={openResetPasswordDialog}
+                onClose={handleCloseResetPasswordDialog}
                 user={selectedUser}
             />
         </Box>

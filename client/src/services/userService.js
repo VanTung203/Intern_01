@@ -85,3 +85,14 @@ export const createUserByAdmin = async (userData) => {
     throw error;
   }
 };
+
+// Gọi API cho chức năng Đặt lại mật khẩu của tài khoản (Admin)
+export const resetPasswordByAdmin = async (userId, passwordData) => {
+  try {
+    const response = await apiClient.post(`/api/user/${userId}/admin-reset-password`, passwordData);
+    return response.data; // Mong đợi { message: "..." }
+  } catch (error) {
+    console.error("API Error - Admin Reset Password in userService:", error.response?.data || error.message);
+    throw error;
+  }
+};

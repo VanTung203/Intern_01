@@ -13,7 +13,7 @@ namespace IdentityServerAPI.Services.Interfaces
         Task<IActionResult> EnableTwoFactorAuthAsync(ClaimsPrincipal userPrincipal);
         Task<IActionResult> DisableTwoFactorAuthAsync(ClaimsPrincipal userPrincipal);
         Task<IActionResult> GetAllUsersAsync(string? searchQuery, string? status); //searchQuery: tìm kiếm, status: lọc
-
         Task<IActionResult> CreateUserAsync(CreateUserDto model);
+        Task<IActionResult> ResetPasswordByAdminAsync(string targetUserId, AdminResetPasswordDto model);
     }
 }

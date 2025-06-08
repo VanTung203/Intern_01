@@ -243,5 +243,29 @@ namespace IdentityServerAPI.Services
 
             return new OkObjectResult(new { message = "Tạo tài khoản thành công!", user = createdUserDto });
         }
+
+        public async Task<IActionResult> ResetPasswordByAdminAsync(string targetUserId, AdminResetPasswordDto model)
+        {
+            var user = await _userManager.FindByIdAsync(targetUserId);
+            if (user == null)
+            {
+                return new NotFoundObjectResult(new { message = "Không tìm thấy người dùng." });
+            }
+
+            // Tạo một token reset mật khẩu.
+            // Đây là cách làm an toàn và được khuyến khích nhất bởi ASP.NET Core Identity.
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+
+            // Sử dụng token đó ngay lập tức để đặt lại mật khẩu.
+            var result = await _userManager.ResetPasswordAsync(user, token, model.NewPassword);
+
+            if (!result.Succeeded)
+            {
+                return new BadRequestObjectResult(new { title = "Không thể đặt lại mật khẩu.", errors = result.Errors });
+            }
+
+            _logger.LogInformation("Password for user {UserId} was reset by an admin.", user.Id);
+            return new OkObjectResult(new { message = "Đặt lại mật khẩu cho người dùng thành công." });
+        }
     }
 }
