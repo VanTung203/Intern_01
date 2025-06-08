@@ -3,7 +3,8 @@ import React, { useEffect, useState } from 'react';
 import {
     Box, Typography, CircularProgress, Alert, Paper, Table, TableBody, TableCell,
     TableContainer, TableHead, TableRow, Chip, Avatar, IconButton, Menu, MenuItem,
-    InputAdornment, TextField, Button, Select, FormControl, InputLabel
+    InputAdornment, TextField, Button, Select, FormControl, InputLabel,
+    ListItemIcon, ListItemText
 } from '@mui/material';
 import { getAllUsers } from '../../services/userService';
 
@@ -11,11 +12,15 @@ import { getAllUsers } from '../../services/userService';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import SearchIcon from '@mui/icons-material/Search';
 import AddIcon from '@mui/icons-material/Add';
+// Import các icons Trạng thái
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import CancelIcon from '@mui/icons-material/Cancel';
+import DoNotDisturbOnIcon from '@mui/icons-material/DoNotDisturbOn';
 import LockIcon from '@mui/icons-material/Lock';
 import { TablePagination } from '@mui/material';
-
+// Import các icons giao diện Thao tác
+import InfoIcon from '@mui/icons-material/Info'; 
+import LockResetIcon from '@mui/icons-material/LockReset';            
+import DeleteIcon from '@mui/icons-material/Delete';     
 
 const UserListPage = () => {
     // State cho dữ liệu
@@ -68,12 +73,27 @@ const UserListPage = () => {
     // --- Các hàm render phụ ---
     const renderStatus = (user) => {
         if (user.lockoutEnd && new Date(user.lockoutEnd) > new Date()) {
-            return <Chip icon={<LockIcon />} label="Bị khóa" color="error" size="small" variant="outlined"/>;
+            // Trạng thái bị khóa: chỉ hiển thị icon ổ khóa màu đỏ
+            return (
+                <Box display="flex">
+                    <LockIcon sx={{ color: 'error.main', fontSize: '1.5rem' }} />
+                </Box>
+            );
         }
         if (user.emailConfirmed) {
-            return <Chip icon={<CheckCircleIcon />} label="Đã xác thực" color="success" size="small" variant="outlined"/>;
+            // Trạng thái đã xác thực: chỉ hiển thị icon dấu tích màu xanh lá
+            return (
+                <Box display="flex">
+                    <CheckCircleIcon sx={{ color: 'success.main', fontSize: '1.5rem' }} />
+                </Box>
+            );
         }
-        return <Chip icon={<CancelIcon />} label="Chưa xác thực" color="warning" size="small" variant="outlined"/>;
+        // Trạng thái chưa xác thực (mặc định): chỉ hiển thị icon dấu trừ trong vòng tròn màu vàng
+        return (
+            <Box display="flex">
+                <DoNotDisturbOnIcon sx={{ color: '', fontSize: '1.5rem' }} />
+            </Box>
+        );
     };
 
     // Slice data cho phân trang
@@ -89,14 +109,14 @@ const UserListPage = () => {
     }
 
     return (
-        <Box sx={{ p: 1 }}>
+        <Box sx={{ }}>
             {/* Breadcrumbs - Phần này có thể thêm sau nếu cần layout phức tạp hơn */}
             <Typography variant="h6" gutterBottom>
                 Quản lý Người dùng
             </Typography>
 
             {/* Thanh công cụ tìm kiếm và lọc */}
-            <Paper sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Paper sx={{ p: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <TextField
                     variant="outlined"
                     size="small"
@@ -111,7 +131,20 @@ const UserListPage = () => {
                     sx={{ width: '18%' }}
                 />
                 <Box>
-                    <Button variant="contained" startIcon={<AddIcon />}>
+                    <Button 
+                        variant="contained"
+                        sx={{
+                            height: 40,
+                            mr: 90,
+                            backgroundColor: '#212B36', // 800: '#212B36'
+                            color: 'white', // Màu chữ trắng
+                            fontSize: '0.85rem',
+                            '&:hover': {
+                            backgroundColor: '#454F5B', // Màu đậm hơn khi hover
+                            
+                            },
+                        }} 
+                        startIcon={<AddIcon />}>
                         Thêm tài khoản mới
                     </Button>
                      <FormControl size="small" sx={{minWidth: 200, mr: 2}}>
@@ -132,34 +165,37 @@ const UserListPage = () => {
             {/* Bảng danh sách người dùng */}
             <TableContainer component={Paper}>
                 <Table sx={{ minWidth: 650 }} aria-label="user table">
-                    <TableHead>
+                    <TableHead style={{ backgroundColor: '#F4F6F8' }}> {/* Màu nền cho phần đầu bảng */}
                         <TableRow>
-                            <TableCell>Email</TableCell>
-                            <TableCell>Số điện thoại</TableCell>
-                            <TableCell>Trạng thái</TableCell>
-                            <TableCell align="right">Thao tác</TableCell>
+                            <TableCell variant="h5" sx={{ fontWeight: 700, mb: 0.75, color: 'text.secondary' }} >Email</TableCell>
+                            <TableCell variant="h5" sx={{ fontWeight: 700, mb: 0.75, color: 'text.secondary' }} >Số điện thoại</TableCell>
+                            <TableCell variant="h5" sx={{ fontWeight: 700, mb: 0.75, color: 'text.secondary' }} >Trạng thái</TableCell>
+                            <TableCell variant="h5" sx={{ fontWeight: 700, mb: 0.75, color: 'text.secondary' }} align="right">Thao tác</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
                         {paginatedUsers.map((user) => (
                             <TableRow key={user.id} hover>
-                                <TableCell>
+                                <TableCell 
+                                    sx={{ 
+                                        width: '450px',
+                                        }}>
                                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                        <Avatar src={user.avatarUrl} sx={{ mr: 2, width: 40, height: 40 }}>
+                                        <Avatar src={user.avatarUrl} sx={{ mr: 1, width: 35, height: 35 }}>
                                             {user.email.charAt(0).toUpperCase()}
                                         </Avatar>
                                         <Box>
-                                            <Typography variant="body2" fontWeight="bold">
+                                            {/* <Typography variant="body2" fontWeight="bold">
                                                 {`${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Chưa cập nhật'}
-                                            </Typography>
-                                            <Typography variant="caption" color="text.secondary">
+                                            </Typography> */}
+                                            <Typography variant="body3" color="text.primary">
                                                 {user.email}
                                             </Typography>
                                         </Box>
                                     </Box>
                                 </TableCell>
-                                <TableCell>{user.phoneNumber || 'Chưa cập nhật'}</TableCell>
-                                <TableCell>{renderStatus(user)}</TableCell>
+                                <TableCell sx={{ width: '450px' }} >{user.phoneNumber || ''}</TableCell>
+                                <TableCell sx={{ width: '400px' }} >{renderStatus(user)}</TableCell>
                                 <TableCell align="right">
                                     <IconButton onClick={(e) => handleMenuOpen(e, user)}>
                                         <MoreVertIcon />
@@ -177,7 +213,7 @@ const UserListPage = () => {
                     page={page}
                     onPageChange={handleChangePage}
                     onRowsPerPageChange={handleChangeRowsPerPage}
-                    labelRowsPerPage="Số hàng mỗi trang:"
+                    labelRowsPerPage="Rows:"
                 />
             </TableContainer>
 
@@ -187,10 +223,39 @@ const UserListPage = () => {
                 open={Boolean(anchorEl)}
                 onClose={handleMenuClose}
             >
-                <MenuItem onClick={handleMenuClose}>Xem chi tiết</MenuItem>
-                <MenuItem onClick={handleMenuClose}>Đặt lại mật khẩu</MenuItem>
-                <MenuItem onClick={handleMenuClose}>Khóa tài khoản</MenuItem>
-                <MenuItem onClick={handleMenuClose} sx={{ color: 'error.main' }}>Xóa tài khoản</MenuItem>
+                <MenuItem onClick={handleMenuClose}>
+                    <ListItemIcon>
+                        <InfoIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText>Xem chi tiết</ListItemText>
+                </MenuItem>
+
+                 <MenuItem onClick={handleMenuClose}>
+                    <ListItemIcon>
+                        <LockResetIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText>Đặt lại mật khẩu</ListItemText>
+                </MenuItem>
+
+                <MenuItem onClick={handleMenuClose}>
+                    <ListItemIcon>
+                        <LockIcon fontSize="small" color="warning" />
+                    </ListItemIcon>
+                    <ListItemText>Khóa tài khoản</ListItemText>
+                </MenuItem>
+
+                <MenuItem onClick={handleMenuClose} sx={{  }}>
+                    <ListItemIcon>
+                        <DeleteIcon fontSize="small" color="error" /> {/* Icon màu đỏ */}
+                    </ListItemIcon>
+                    <ListItemText 
+                        sx={{
+                            '& .MuiListItemText-primary': { // Class mặc định cho văn bản chính trong ListItemText
+                            color: 'error.main', // Sử dụng màu đỏ từ theme
+                            },
+                        }}>
+                        Xóa tài khoản </ListItemText>
+                </MenuItem>
             </Menu>
         </Box>
     );

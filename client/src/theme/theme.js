@@ -65,7 +65,8 @@ const theme = createTheme({
 
     body1: { fontSize: '1rem', lineHeight: 1.6, color: GREY[700] }, // Có thể dùng cho mô tả cột trái
     body2: { fontSize: '0.875rem', lineHeight: 1.5, color: GREY[600] }, // Text của checkbox, link "Cần trợ giúp?"
-
+    body3: { fontSize: '0.8rem', lineHeight: 1.5, color: GREY[600] },
+    
     caption: { fontSize: '0.75rem', lineHeight: 1.5, color: GREY[500], fontWeight: 500 }, // Label trên input
 
     button: { fontWeight: 600, textTransform: 'none', fontSize: '0.9375rem' },
