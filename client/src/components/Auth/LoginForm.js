@@ -163,35 +163,7 @@ const LoginForm = () => {
 
   return (
     <Box component="form" onSubmit={handleSubmit} noValidate sx={{ width: '100%' }}>
-      <Button
-          fullWidth
-          variant="outlined"
-          onClick={handleGoogleLogin}
-          startIcon={<GoogleIcon />}
-          disabled={isLoading}
-          sx={{
-              mb: 2,
-              py: 1.1,
-              color: 'text.primary',
-              borderColor: 'grey.400',
-              '&:hover': {
-                  borderColor: 'text.primary',
-                  backgroundColor: 'action.hover'
-              },
-              textTransform: 'none',
-              fontSize: '0.9375rem',
-              fontWeight: 600
-          }}
-      >
-          Đăng nhập với Google
-      </Button>
 
-      <Divider sx={{ my: 1.5 }}>
-          <Typography variant="overline" sx={{ color: 'text.secondary', px: 1 }}>
-              OR
-          </Typography>
-      </Divider>
-      
       {apiMessage && (
         <Alert
           severity={apiMessage.type || 'info'} // Mặc định là 'info' nếu type không được set
@@ -264,6 +236,36 @@ const LoginForm = () => {
       >
         {isLoading ? 'Đang xử lý...' : 'Đăng nhập'}
       </Button>
+
+      <Divider sx={{ my: 1.5 }}>
+        <Typography variant="" sx={{ color: 'text.secondary', px: 1 }}>
+            Hoặc
+        </Typography>
+      </Divider>
+
+      <Button
+          fullWidth
+          variant="outlined"
+          onClick={handleGoogleLogin}
+          startIcon={<GoogleIcon />}
+          disabled={isLoading}
+          sx={{
+              mb: 2,
+              py: 1.1,
+              color: 'text.primary',
+              borderColor: 'grey.400',
+              '&:hover': {
+                  borderColor: 'text.primary',
+                  backgroundColor: 'action.hover'
+              },
+              textTransform: 'none',
+              fontSize: '0.9375rem',
+              fontWeight: 600
+          }}
+      >
+          Đăng nhập với Google
+      </Button>
+
     </Box>
   );
 };
