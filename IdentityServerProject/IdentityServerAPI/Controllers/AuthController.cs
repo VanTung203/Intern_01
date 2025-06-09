@@ -5,6 +5,8 @@ using IdentityServerAPI.Services.Interfaces;
 using System.Threading.Tasks; // Đảm bảo using này có
 using Microsoft.Extensions.Configuration; // Đảm bảo using này có
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity; // Cho SignInManager
+using IdentityServerAPI.Models; // Cho ApplicationUser
 
 namespace IdentityServerAPI.Controllers
 {
@@ -14,11 +16,16 @@ namespace IdentityServerAPI.Controllers
     {
         private readonly IAuthService _authService;
         private readonly IConfiguration _configuration;
+        private readonly SignInManager<ApplicationUser> _signInManager;
 
-        public AuthController(IAuthService authService, IConfiguration configuration)
+        public AuthController(
+            IAuthService authService,
+            IConfiguration configuration,
+            SignInManager<ApplicationUser> signInManager)
         {
             _authService = authService;
             _configuration = configuration;
+            _signInManager = signInManager;
         }
 
         [HttpPost("register")]
@@ -111,6 +118,25 @@ namespace IdentityServerAPI.Controllers
                 return BadRequest(ModelState);
             }
             return await _authService.ChangeUserPasswordAsync(User, model);
+        }
+
+        // 2 ENDPOINTS CHO GOOGLE LOGIN
+        [HttpGet("external-login")] // Route: GET /api/auth/external-login?provider=Google
+        [AllowAnonymous]
+        public IActionResult ExternalLogin(string provider, string? returnUrl = null)
+        {
+            // Cấu hình URL để Google chuyển hướng về sau khi xác thực thành công
+            var redirectUrl = Url.Action(nameof(SigninGoogle), "Auth", new { returnUrl });
+            var properties = _signInManager.ConfigureExternalAuthenticationProperties(provider, redirectUrl);
+            return Challenge(properties, provider); // Thao tác này sẽ tự động chuyển hướng người dùng đến trang đăng nhập Google
+        }
+
+        [HttpGet("signin-google")]
+        [AllowAnonymous]
+        public async Task<IActionResult> SigninGoogle()
+        {
+            // Gọi service để xử lý logic
+            return await _authService.HandleGoogleLoginCallbackAsync();
         }
     }
 }

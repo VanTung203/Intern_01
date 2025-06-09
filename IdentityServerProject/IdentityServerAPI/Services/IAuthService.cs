@@ -16,5 +16,6 @@ namespace IdentityServerAPI.Services.Interfaces
         Task<IActionResult> ForgotPasswordAsync(ForgotPasswordDto model);
         Task<IActionResult> ResetUserPasswordAsync(ResetPasswordDto model);
         Task<IActionResult> ChangeUserPasswordAsync(ClaimsPrincipal userPrincipal, ChangePasswordDto model);
+        Task<IActionResult> HandleGoogleLoginCallbackAsync();
     }
 }

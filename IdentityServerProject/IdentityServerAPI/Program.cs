@@ -75,7 +75,7 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IAuthService, AuthService>(); // AuthService là nơi logic chính
 builder.Services.AddScoped<IUserService, UserService>();
 
-// --- 6. Cấu hình JWT Authentication (Giữ nguyên) ---
+// --- 6. Cấu hình JWT Authentication và thêm GOOGLE Authentication ---
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -99,9 +99,25 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = jwtSettings.Audience,
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SecretKey))
     };
+})
+.AddGoogle(googleOptions =>
+{
+    var googleAuthSettings = builder.Configuration.GetSection("GoogleAuthSettings");
+    var clientId = googleAuthSettings["ClientId"];
+    var clientSecret = googleAuthSettings["ClientSecret"];
+
+    if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(clientSecret))
+    {
+        throw new InvalidOperationException("Google ClientId and ClientSecret are not configured in appsettings.json.");
+    }
+
+    googleOptions.ClientId = clientId;
+    googleOptions.ClientSecret = clientSecret;
+    // Tích hợp với hệ thống Identity có sẵn
+    googleOptions.SignInScheme = IdentityConstants.ExternalScheme;
 });
 
-// --- Thêm các dịch vụ cần thiết khác (Giữ nguyên) ---
+// --- Thêm các dịch vụ cần thiết khác ---
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>

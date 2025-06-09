@@ -27,8 +27,8 @@ const TwoFactorAuthPage = () => {
 
   return (
     <PublicPageLayout>
-      <Container component="main" maxWidth="xs" sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <Paper elevation={3} sx={{ padding: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+      <Container component="main" maxWidth="xs" sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', pl: {lg: 20 } }}>
+        <Paper elevation={3} sx={{ padding: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', width: '150%' }}>
           <Typography component="h1" variant="h5" sx={{ mb: 1 }}>
             Xác Thực 2 lớp
           </Typography>

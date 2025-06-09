@@ -17,6 +17,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Web; // Cho HttpUtility
 using IdentityServerAPI.Controllers;
+using Microsoft.AspNetCore.WebUtilities;
 
 namespace IdentityServerAPI.Services
 {
@@ -163,11 +164,6 @@ namespace IdentityServerAPI.Services
             return new RedirectResult($"{targetLoginRedirectUrl}?confirmationStatus=failed&reason=confirmation_error&details={HttpUtility.UrlEncode(errorMessages)}");
         }
 
-        // ... (Các phương thức LoginUserAsync, VerifyTwoFactorTokenAsync, GenerateJwtTokenResultAsync,
-        //      ForgotPasswordAsync, ResetUserPasswordAsync, ChangeUserPasswordAsync giữ nguyên như code bạn đã cung cấp)
-        //      Đảm bảo GenerateJwtTokenResultAsync vẫn là async Task<IActionResult> và trả về đầy đủ thông tin user.
-
-        // Ví dụ: GenerateJwtTokenResultAsync (giữ nguyên từ lần sửa trước)
         private async Task<IActionResult> GenerateJwtTokenResultAsync(ApplicationUser user)
         {
             var claims = new List<Claim>
@@ -238,8 +234,8 @@ namespace IdentityServerAPI.Services
                 }
             });
         }
-        // ... (Các phương thức khác)
-         public async Task<IActionResult> LoginUserAsync(LoginDto model)
+        // Các phương thức khác
+        public async Task<IActionResult> LoginUserAsync(LoginDto model)
         {
             var user = await _userManager.FindByEmailAsync(model.Email);
 
@@ -252,10 +248,12 @@ namespace IdentityServerAPI.Services
             if (!await _userManager.IsEmailConfirmedAsync(user))
             {
                 _logger.LogWarning("Login attempt for unconfirmed email: {Email}", model.Email);
-                return new ObjectResult(new {
+                return new ObjectResult(new
+                {
                     message = "Email của bạn chưa được xác thực. Vui lòng kiểm tra hộp thư để hoàn tất xác thực.",
                     code = "EMAIL_NOT_CONFIRMED" // Mã lỗi cụ thể cho frontend
-                }) { StatusCode = 403 }; // Forbidden
+                })
+                { StatusCode = 403 }; // Forbidden
             }
 
             var signInResult = await _signInManager.CheckPasswordSignInAsync(user, model.Password, lockoutOnFailure: true);
@@ -286,7 +284,8 @@ namespace IdentityServerAPI.Services
                 {
                     await _emailService.SendEmailAsync(user.Email, subject, messageBody);
                     _logger.LogInformation("2FA OTP sent to {Email}", user.Email);
-                    return new OkObjectResult(new {
+                    return new OkObjectResult(new
+                    {
                         requiresTwoFactor = true,
                         email = user.Email,
                         message = "Yêu cầu xác thực 2 lớp. Vui lòng kiểm tra email của bạn để nhận mã OTP."
@@ -411,6 +410,94 @@ namespace IdentityServerAPI.Services
 
             _logger.LogInformation("Password changed successfully for user {UserId}", userIdString);
             return new OkObjectResult(new { message = "Mật khẩu đã được thay đổi thành công." });
+        }
+        
+        // TRIỂN KHAI PHƯƠNG THỨC Login bằng Google
+        public async Task<IActionResult> HandleGoogleLoginCallbackAsync()
+        {
+            var frontendCallbackUrl = _configuration["FrontendUrls:GoogleSigninSuccessRedirect"];
+            if (string.IsNullOrEmpty(frontendCallbackUrl))
+            {
+                _logger.LogError("FrontendUrls:GoogleSigninSuccessRedirect is not configured in appsettings.json");
+                return new BadRequestObjectResult(new { message = "Lỗi cấu hình phía máy chủ." });
+            }
+
+            var info = await _signInManager.GetExternalLoginInfoAsync();
+            if (info == null)
+            {
+                _logger.LogWarning("External login info not found during callback.");
+                return new RedirectResult($"{_configuration["FrontendUrls:Base"]}/login?externalLoginStatus=error&reason=provider_error");
+            }
+
+            // Thử đăng nhập người dùng bằng thông tin từ nhà cung cấp bên ngoài (Google)
+            // bypassTwoFactor: true vì Google đã xác thực, ta không cần 2FA của hệ thống mình nữa.
+            var signInResult = await _signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, isPersistent: false, bypassTwoFactor: true);
+
+            ApplicationUser user;
+
+            if (signInResult.Succeeded)
+            {
+                _logger.LogInformation("User successfully signed in with {LoginProvider} provider.", info.LoginProvider);
+                user = await _userManager.FindByLoginAsync(info.LoginProvider, info.ProviderKey);
+            }
+            else
+            {
+                // Nếu người dùng chưa có tài khoản, tự động tạo một tài khoản cho họ
+                var email = info.Principal.FindFirstValue(ClaimTypes.Email);
+                if (string.IsNullOrEmpty(email))
+                {
+                    _logger.LogError("Email claim not received from external provider {LoginProvider}.", info.LoginProvider);
+                    return new RedirectResult($"{_configuration["FrontendUrls:Base"]}/login?externalLoginStatus=error&reason=email_required");
+                }
+
+                user = await _userManager.FindByEmailAsync(email);
+                if (user == null)
+                {
+                    // Tạo user mới
+                    user = new ApplicationUser
+                    {
+                        UserName = email,
+                        Email = email,
+                        FirstName = info.Principal.FindFirstValue(ClaimTypes.GivenName),
+                        LastName = info.Principal.FindFirstValue(ClaimTypes.Surname),
+                        EmailConfirmed = true, // Email đã được Google xác thực
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow
+                    };
+
+                    var createUserResult = await _userManager.CreateAsync(user);
+                    if (!createUserResult.Succeeded)
+                    {
+                        _logger.LogError("Failed to create new user from external login: {Errors}", string.Join(", ", createUserResult.Errors.Select(e => e.Description)));
+                        return new RedirectResult($"{_configuration["FrontendUrls:Base"]}/login?externalLoginStatus=error&reason=creation_failed");
+                    }
+                     // Gán vai trò "User" mặc định
+                    await _userManager.AddToRoleAsync(user, "User");
+                }
+                
+                // Liên kết tài khoản hiện có (hoặc vừa tạo) với thông tin đăng nhập từ Google
+                var addLoginResult = await _userManager.AddLoginAsync(user, info);
+                if (!addLoginResult.Succeeded)
+                {
+                    _logger.LogError("Failed to add external login for user {Email}: {Errors}", user.Email, string.Join(", ", addLoginResult.Errors.Select(e => e.Description)));
+                    return new RedirectResult($"{_configuration["FrontendUrls:Base"]}/login?externalLoginStatus=error&reason=linking_failed");
+                }
+            }
+            
+            // Sau khi có user (đăng nhập hoặc vừa tạo), tạo JWT token và chuyển hướng về frontend
+            var tokenResult = await GenerateJwtTokenResultAsync(user);
+            if (tokenResult is OkObjectResult okResult && okResult.Value != null)
+            {
+                var tokenValue = okResult.Value.GetType().GetProperty("token")?.GetValue(okResult.Value, null)?.ToString();
+                if (!string.IsNullOrEmpty(tokenValue))
+                {
+                    var uri = QueryHelpers.AddQueryString(frontendCallbackUrl, "token", tokenValue);
+                    return new RedirectResult(uri);
+                }
+            }
+
+            _logger.LogError("Failed to generate JWT for external user {Email}", user.Email);
+            return new RedirectResult($"{_configuration["FrontendUrls:Base"]}/login?externalLoginStatus=error&reason=token_generation_failed");
         }
     }
 }

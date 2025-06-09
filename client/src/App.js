@@ -18,6 +18,7 @@ import ForgotPasswordEmailSentPage from './pages/ForgotPasswordEmailSentPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import ResetPasswordSuccessPage from './pages/ResetPasswordSuccessPage';
 import TwoFactorAuthPage from './pages/TwoFactorAuthPage';
+import GoogleSigninSuccessPage from './pages/GoogleSigninSuccessPage';
 
 // Private Pages
 import UserProfilePage from './pages/UserProfilePage';
@@ -60,6 +61,7 @@ function App() {
         <Route path="/reset-password-success" element={<ResetPasswordSuccessPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/verify-2fa" element={<TwoFactorAuthPage />} />
+        <Route path="/google-signin-success" element={<GoogleSigninSuccessPage />} />
 
         {/* User Private Routes */}
         <Route element={<PrivateRoute />}>

@@ -3,6 +3,7 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { setGlobalAuthHeader } from '../api/apiClient';
 import { getUserProfile } from '../services/userService';
+import { jwtDecode } from 'jwt-decode';
 
 const AuthContext = createContext(null);
 
@@ -55,6 +56,39 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    // >>> START: THÊM HÀM MỚI <<<
+    // Hàm này được gọi từ trang callback, chỉ nhận token
+    const loginActionFromToken = (token) => {
+        // 1. Lưu token và thiết lập header
+        localStorage.setItem('authToken', token);
+        setGlobalAuthHeader(token);
+
+        // 2. Giải mã token để lấy thông tin user cơ bản
+        const decodedToken = jwtDecode(token);
+        const userData = {
+            id: decodedToken.nameid,
+            email: decodedToken.email,
+            userName: decodedToken.unique_name,
+            firstName: decodedToken.given_name || '',
+            lastName: decodedToken.family_name || '',
+            roles: decodedToken.role || [], // Đảm bảo roles là một mảng
+        };
+
+        // 3. Cập nhật state
+        setUser(userData);
+        setIsAuthenticated(true);
+        setIsLoading(false); // Quan trọng: dừng trạng thái loading
+
+        // 4. Điều hướng
+        const rolesArray = Array.isArray(userData.roles) ? userData.roles : [userData.roles];
+        if (rolesArray.includes('Admin')) {
+            navigate('/admin/users', { replace: true });
+        } else {
+            navigate('/profile/info', { replace: true });
+        }
+    };
+    // >>> END: THÊM HÀM MỚI <<<
+
     const logoutAction = () => {
         localStorage.removeItem('authToken');
         setGlobalAuthHeader(null);
@@ -68,7 +102,8 @@ export const AuthProvider = ({ children }) => {
         isAuthenticated,
         isLoading,
         loginAction,
-        logoutAction
+        logoutAction,
+        loginActionFromToken
     };
 
     return (

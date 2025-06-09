@@ -2,13 +2,17 @@
 import React, { useState } from 'react';
 import {
   TextField, Button, Box, Typography, Link as MuiLink,
-  IconButton, InputAdornment, Alert, CircularProgress
+  IconButton, InputAdornment, Alert, CircularProgress, Divider
 } from '@mui/material';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import GoogleIcon from '@mui/icons-material/Google';
 import { login } from '../../services/authService';
 import { useAuth } from '../../context/AuthContext';
+
+// Xác định API URL của backend (thay đổi nếu cần)
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://localhost:7289';
 
 const LoginForm = () => {
   const navigate = useNavigate();
@@ -42,6 +46,12 @@ const LoginForm = () => {
     setErrors(tempErrors);
     return Object.keys(tempErrors).length === 0;
   };
+
+  const handleGoogleLogin = () => {
+    // Điều hướng đến endpoint backend để bắt đầu luồng đăng nhập Google
+    window.location.href = `${API_BASE_URL}/api/auth/external-login?provider=Google`;
+  };
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -153,6 +163,35 @@ const LoginForm = () => {
 
   return (
     <Box component="form" onSubmit={handleSubmit} noValidate sx={{ width: '100%' }}>
+      <Button
+          fullWidth
+          variant="outlined"
+          onClick={handleGoogleLogin}
+          startIcon={<GoogleIcon />}
+          disabled={isLoading}
+          sx={{
+              mb: 2,
+              py: 1.1,
+              color: 'text.primary',
+              borderColor: 'grey.400',
+              '&:hover': {
+                  borderColor: 'text.primary',
+                  backgroundColor: 'action.hover'
+              },
+              textTransform: 'none',
+              fontSize: '0.9375rem',
+              fontWeight: 600
+          }}
+      >
+          Đăng nhập với Google
+      </Button>
+
+      <Divider sx={{ my: 1.5 }}>
+          <Typography variant="overline" sx={{ color: 'text.secondary', px: 1 }}>
+              OR
+          </Typography>
+      </Divider>
+      
       {apiMessage && (
         <Alert
           severity={apiMessage.type || 'info'} // Mặc định là 'info' nếu type không được set
