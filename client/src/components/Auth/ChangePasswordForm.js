@@ -10,7 +10,7 @@ import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import { changePassword } from '../../services/authService'; // Đảm bảo hàm này có trong authService
 
-// Hàm helper renderTextField (import nếu dùng chung)
+// Hàm helper renderTextField
 const renderFloatingLabelTextField = ({
   name,
   labelText,
@@ -25,7 +25,7 @@ const renderFloatingLabelTextField = ({
   isRequired = true,
   autoFocus = false
 }) => (
-  <Box sx={{ position: 'relative', mb: 2.5 }}> {/* Tăng mb một chút */}
+  <Box sx={{ position: 'relative', mb: 2.5 }}>
     <Typography
       variant="caption"
       component="label"
@@ -51,7 +51,7 @@ const renderFloatingLabelTextField = ({
       id={name}
       name={name}
       type={type}
-      autoComplete={name.includes('newPassword') ? "new-password" : "current-password"} // Gợi ý autoComplete
+      autoComplete={name.includes('newPassword') ? "new-password" : "current-password"}
       placeholder={placeholder}
       value={value}
       onChange={onChange}
@@ -61,13 +61,33 @@ const renderFloatingLabelTextField = ({
       size="small"
       autoFocus={autoFocus}
       InputProps={InputProps}
-      inputProps={inputProps || { style: { paddingTop: '10px', paddingBottom: '10px', fontSize: '0.9rem' } }} // Mặc định nếu không truyền
+      inputProps={inputProps || { style: { paddingTop: '10px', paddingBottom: '10px', fontSize: '0.9rem' } }}
+      variant="outlined" // Đảm bảo luôn sử dụng variant "outlined" để có viền
+      // **THÊM ĐOẠN CODE CỦA BẠN VÀO ĐÂY**
+      sx={{
+        '& .MuiOutlinedInput-root': {
+          backgroundColor: 'transparent', // Đảm bảo không có màu nền mặc định cho TextField
+          '& fieldset': { // Nhắm mục tiêu vào phần viền
+            borderColor: '#c0c0c0', // Màu viền mặc định
+          },
+          '&:hover fieldset': {
+            borderColor: '#808080', // Màu viền khi hover
+          },
+          '&.Mui-focused fieldset': {
+            borderColor: (theme) => theme.palette.primary.main, // Màu viền khi focus
+            borderWidth: '2px', // Độ dày viền khi focus
+          },
+          // Xóa màu nền khi disabled cho phần root của TextField
+          '&.Mui-disabled': {
+            backgroundColor: 'transparent',
+          },
+        },
+      }}
     />
   </Box>
 );
 
 const ChangePasswordForm = () => {
-  // const navigate = useNavigate(); // Bỏ nếu không dùng
   const [formData, setFormData] = useState({
     currentPassword: '',
     newPassword: '',
@@ -78,7 +98,7 @@ const ChangePasswordForm = () => {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [apiMessage, setApiMessage] = useState(null); // { type, text, details? }
+  const [apiMessage, setApiMessage] = useState(null);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -125,18 +145,17 @@ const ChangePasswordForm = () => {
           confirmNewPassword: formData.confirmNewPassword,
         });
         setApiMessage({ type: 'success', text: response.message || "Đổi mật khẩu thành công!" });
-        setFormData({ currentPassword: '', newPassword: '', confirmNewPassword: '' }); // Reset form
+        setFormData({ currentPassword: '', newPassword: '', confirmNewPassword: '' });
         setErrors({});
       } catch (error) {
         const errorData = error.response?.data;
         if (errorData?.errors && Array.isArray(errorData.errors)) {
-            setApiMessage({ type: 'error', text: errorData.title || 'Đổi mật khẩu thất bại.', details: errorData.errors.map(err => err.description || err.code) });
+          setApiMessage({ type: 'error', text: errorData.title || 'Đổi mật khẩu thất bại.', details: errorData.errors.map(err => err.description || err.code) });
         } else if (errorData?.message) {
-            setApiMessage({ type: 'error', text: errorData.message });
+          setApiMessage({ type: 'error', text: errorData.message });
         } else if (typeof errorData === 'string') {
-            setApiMessage({ type: 'error', text: errorData });
-        }
-         else {
+          setApiMessage({ type: 'error', text: errorData });
+        } else {
           setApiMessage({ type: 'error', text: error.message || 'Lỗi không mong muốn.' });
         }
       } finally {
@@ -149,7 +168,7 @@ const ChangePasswordForm = () => {
 
 
   return (
-    <Box component="form" onSubmit={handleSubmit} noValidate sx={{ width: '100%', maxWidth: 500 }}>
+    <Box component="form" onSubmit={handleSubmit} noValidate sx={{ width: '100%', maxWidth: 1000 }}>
       {apiMessage && (
         <Alert severity={apiMessage.type} sx={{ mb: 2 }} onClose={() => setApiMessage(null)}>
           {apiMessage.text}
@@ -173,7 +192,7 @@ const ChangePasswordForm = () => {
         disabled: isLoading,
         autoFocus: true,
         isRequired: true,
-        InputProps:{ endAdornment: ( <InputAdornment position="end"> <IconButton aria-label="toggle current password visibility" onClick={handleClickShowCurrentPassword} onMouseDown={handleMouseDownPassword} edge="end" size="small" sx={{color: 'text.secondary', mr: -0.5}}> {showCurrentPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />} </IconButton> </InputAdornment> )},
+        InputProps:{ endAdornment: ( <InputAdornment position="end"> <IconButton aria-label="toggle current password visibility" onClick={handleClickShowCurrentPassword} onMouseDown={handleMouseDownPassword} edge="end" size="small" sx={{color: 'text.secondary', mr: -0.5}}> {showCurrentPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />} </IconButton> </InputAdornment> ), style: { paddingTop: '5px', paddingBottom: '5px', fontSize: '0.9rem' }},
       })}
       {renderFloatingLabelTextField({
         name: "newPassword",
@@ -185,7 +204,7 @@ const ChangePasswordForm = () => {
         disabled: isLoading,
         placeholder:"Tối thiểu 6+ ký tự",
         isRequired: true,
-        InputProps:{ endAdornment: ( <InputAdornment position="end"> <IconButton aria-label="toggle new password visibility" onClick={handleClickShowNewPassword} onMouseDown={handleMouseDownPassword} edge="end" size="small" sx={{color: 'text.secondary', mr: -0.5}}> {showNewPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />} </IconButton> </InputAdornment> )},
+        InputProps:{ endAdornment: ( <InputAdornment position="end"> <IconButton aria-label="toggle new password visibility" onClick={handleClickShowNewPassword} onMouseDown={handleMouseDownPassword} edge="end" size="small" sx={{color: 'text.secondary', mr: -0.5}}> {showNewPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />} </IconButton> </InputAdornment> ), style: { paddingTop: '5px', paddingBottom: '5px', fontSize: '0.9rem' }},
       })}
       {renderFloatingLabelTextField({
         name: "confirmNewPassword",
@@ -196,36 +215,34 @@ const ChangePasswordForm = () => {
         error: errors.confirmNewPassword,
         disabled: isLoading,
         isRequired: true,
-        InputProps:{ endAdornment: ( <InputAdornment position="end"> <IconButton aria-label="toggle confirm new password visibility" onClick={handleClickShowConfirmNewPassword} onMouseDown={handleMouseDownPassword} edge="end" size="small" sx={{color: 'text.secondary', mr: -0.5}}> {showConfirmNewPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />} </IconButton> </InputAdornment> )},
+        InputProps:{ endAdornment: ( <InputAdornment position="end"> <IconButton aria-label="toggle confirm new password visibility" onClick={handleClickShowConfirmNewPassword} onMouseDown={handleMouseDownPassword} edge="end" size="small" sx={{color: 'text.secondary', mr: -0.5}}> {showConfirmNewPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />} </IconButton> </InputAdornment> ), style: { paddingTop: '5px', paddingBottom: '5px', fontSize: '0.9rem' }},
       })}
 
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2.5 }}>
         <Button
           type="submit"
           variant="contained"
-          // Nút sẽ disable nếu đang loading HOẶC nếu bất kỳ trường nào còn trống HOẶC nếu có lỗi validation client
           disabled={isLoading || !formData.currentPassword || !formData.newPassword || !formData.confirmNewPassword || Object.values(errors).some(e => !!e)}
-          sx={(theme) => ({ // Truyền theme vào sx
-            py: 1, // Padding vertical
-            px: 2.5, // Padding horizontal
+          sx={(theme) => ({
+            py: 1,
+            px: 2.5,
             fontWeight: 600,
             fontSize: '0.875rem',
             textTransform: 'none',
             boxShadow: 'none',
             borderRadius: '8px',
-            // Logic màu sắc dựa trên trạng thái disabled
             ...( (isLoading || !formData.currentPassword || !formData.newPassword || !formData.confirmNewPassword || Object.values(errors).some(e => !!e)) ?
-              { // Khi disabled
-                backgroundColor: 'grey.300', // Màu xám nhạt khi disable (từ theme)
-                color: 'text.disabled',      // Màu chữ khi disable (từ theme)
+              {
+                backgroundColor: 'grey.300',
+                color: 'text.disabled',
                 '&:hover': {
-                  backgroundColor: 'grey.300', // Giữ nguyên màu khi hover lúc disable
+                  backgroundColor: 'grey.300',
                 }
-              } : { // Khi enabled
-                backgroundColor: theme.palette.grey[800], // Màu tối như nút "Tạo tài khoản"
+              } : {
+                backgroundColor: theme.palette.grey[800],
                 color: theme.palette.common.white,
                 '&:hover': {
-                  backgroundColor: theme.palette.grey[900], // Đậm hơn khi hover
+                  backgroundColor: theme.palette.grey[900],
                 }
               }
             )

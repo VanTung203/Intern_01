@@ -188,17 +188,17 @@ const UserProfilePage = () => {
             </Breadcrumbs>
 
             <Box sx={{ display: 'flex'}}>
-                {/* Sidebar - chiếm 3/12 = 25% chiều rộng */}
-                <Box sx={{ width: { xs: '100%', md: '25%' }, borderRight: '1px solid #e0e0e0' }}>
+                {/* Sidebar */}
+                <Box sx={{ width: { xs: '100%', md: '20%' }, borderRight: '1px solid #e0e0e0' }}>
                     <ProfileSidebar />
                 </Box>
 
-                {/* Main Content - chiếm 75% */}
+                {/* Main Content */}
                 <Box sx={{ flex: 1, p: { xs: 2, sm: 3, md: 4 }, overflowY: 'auto' }}>
                     {location.pathname === '/profile/info' || location.pathname === '/profile' ? (
                         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
                             {/* Avatar Card - chiếm 1/3 */}
-                            <Box sx={{ flex: { xs: '100%', lg: '1 1 30%' }, display: 'flex', width:'10%' }}>
+                            <Box sx={{ flex: { xs: '100%', lg: '1 1 25%' }, display: 'flex', width:'100%' }}>
                                 <AvatarCard
                                     avatarUrl={avatarPreviewForCard}
                                     firstName={firstNameForCard}
@@ -206,17 +206,15 @@ const UserProfilePage = () => {
                             </Box>
 
                             {/* Form Card - chiếm 2/3 */}
-                            <Box sx={{ flex: { xs: '100%', lg: '1 1 65%' }, display: 'flex', width:'140%'  }}>
+                            <Box sx={{ flex: { xs: '100%', lg: '1 1 65%' }, display: 'flex', width:'100%'  }}>
                                 <Paper
                                     elevation={0}
                                     sx={{
                                         p: { xs: 2, sm: 3, md: 3.5 },
                                         borderRadius: '12px',
                                         border: `1px solid ${theme.palette.divider}`,
-                                        height: '100%',
                                         display: 'flex',
                                         flexDirection: 'column',
-                                        width:'140%'
                                     }}
                                 >
                                     <Outlet context={{ handleAvatarUpdate }} />
@@ -233,6 +231,8 @@ const UserProfilePage = () => {
                                 border: `1px solid ${theme.palette.divider}`,
                                 display: 'flex',
                                 flexDirection: 'column',
+                                maxWidth: 1200,
+                                
                             }}
                         >
                             <Outlet />

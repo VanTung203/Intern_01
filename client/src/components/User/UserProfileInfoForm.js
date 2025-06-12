@@ -1,16 +1,19 @@
 // client/src/components/User/UserProfileInfoForm.js
 import React, { useState, useEffect, useRef } from 'react';
-import { Box, Grid, TextField, Button, Typography, CircularProgress, Select, MenuItem, FormControl, InputLabel, FormHelperText, Alert } from '@mui/material'; // Bỏ Paper, Avatar, IconButton (PhotoCameraIcon)
-// import PhotoCameraIcon from '@mui/icons-material/PhotoCamera'; // Bỏ
+import { Box, Grid, TextField, Button, Typography, CircularProgress, Select, MenuItem, FormControl, FormHelperText, Alert } from '@mui/material';
 import { getUserProfile, updateUserProfile, uploadAvatar } from '../../services/userService';
-// import { alpha } from '@mui/material/styles'; // Bỏ nếu không dùng
-import { useOutletContext } from 'react-router-dom'; // Để nhận context từ Outlet
+import { useOutletContext } from 'react-router-dom';
 
-// --- Giữ nguyên renderFloatingLabelTextField và renderFloatingLabelSelectField ---
-const renderFloatingLabelTextField = ({ name, labelText, placeholder, type = 'text', value, onChange, error, disabled, isRequired = false, multiline = false, rows = 1, InputProps, gridSm=12 /* Thêm gridSm default */ }) => (
-    // Thêm Grid item bọc ngoài để dễ dàng kiểm soát layout
-    <Grid item xs={12} sm={gridSm}>
-        <Box sx={{ position: 'relative', width: '100%' }}>
+// --- renderFloatingLabelTextField SỬA ĐỔI ---
+const renderFloatingLabelTextField = ({ name, labelText, placeholder, type = 'text', value, onChange, error, disabled, isRequired = false, multiline = false, rows = 1, InputProps, gridSize = { xs: 12, sm: 6 }, boxSx }) => (
+    <Grid item {...gridSize}> {/* Sử dụng gridSize được truyền vào */}
+        <Box sx={{
+            position: 'relative',
+            width: '100%',
+            minWidth: '300px', // Đặt minWidth mặc định là 300px
+            margin: '0 auto', // Căn giữa phần tử trong Grid item
+            ...boxSx // Thêm các thuộc tính sx được truyền vào cho Box
+        }}>
             <Typography
                 variant="caption" component="label" htmlFor={name}
                 sx={{ position: 'absolute', top: '-9px', left: '12px', backgroundColor: (theme) => theme.palette.background.paper, px: '5px', fontSize: '11.5px', color: error ? 'error.main' : 'text.secondary', fontWeight: 500, zIndex: 1 }}
@@ -20,29 +23,83 @@ const renderFloatingLabelTextField = ({ name, labelText, placeholder, type = 'te
             <TextField
                 required={isRequired} margin="none" fullWidth id={name} name={name} type={type}
                 placeholder={placeholder} value={value || ''} onChange={onChange}
-                error={!!error} helperText={error || ''} disabled={disabled} size="small"
+                error={!!error} helperText={error || ''} disabled={disabled}
                 multiline={multiline} rows={rows}
                 InputProps={InputProps}
-                inputProps={{ style: { paddingTop: '10px', paddingBottom: '10px', fontSize: '0.9rem' } }}
+                inputProps={{ style: { paddingTop: '17.5px', paddingBottom: '17.5px', fontSize: '0.9rem' } }}
+                sx={{
+                    // Áp dụng màu nền transparent cho input element khi disabled
+                    '& .MuiInputBase-input.Mui-disabled': {
+                        WebkitTextFillColor: 'rgba(0, 0, 0, 0.87)', // Giữ màu chữ mặc định (đen hoặc gần đen)
+                        opacity: 1, // Đảm bảo opacity không bị giảm
+                        backgroundColor: 'transparent', // Xóa màu nền xám
+                    },
+                    '& .MuiOutlinedInput-root': {
+                        backgroundColor: 'transparent', // Đảm bảo không có màu nền mặc định cho TextField
+                        '& fieldset': {
+                            borderColor: '#c0c0c0', // Màu viền mặc định
+                        },
+                        '&:hover fieldset': {
+                            borderColor: '#808080', // Màu viền khi hover
+                        },
+                        '&.Mui-focused fieldset': {
+                            borderColor: (theme) => theme.palette.primary.main, // Màu viền khi focus
+                            borderWidth: '2px', // Độ dày viền khi focus
+                        },
+                        // Xóa màu nền khi disabled cho phần root của TextField
+                        '&.Mui-disabled': {
+                            backgroundColor: 'transparent',
+                        },
+                    },
+                }}
             />
         </Box>
     </Grid>
 );
 
-const renderFloatingLabelSelectField = ({ name, labelText, value, onChange, error, disabled, options, isRequired = false, gridSm=12 /* Thêm gridSm default */ }) => (
-    <Grid item xs={12} sm={gridSm}>
-        <Box sx={{ position: 'relative', width: '100%' }}>
+// --- renderFloatingLabelSelectField SỬA ĐỔI ---
+const renderFloatingLabelSelectField = ({ name, labelText, value, onChange, error, disabled, options, isRequired = false, gridSize = { xs: 12, sm: 6 }, boxSx }) => (
+    <Grid item {...gridSize}> {/* Sử dụng gridSize được truyền vào */}
+        <Box sx={{
+            position: 'relative',
+            width: '100%',
+            minWidth: '300px', // Đặt minWidth mặc định là 300px
+            margin: '0 auto', // Căn giữa phần tử trong Grid item
+            ...boxSx // Thêm các thuộc tính sx được truyền vào cho Box
+        }}>
             <Typography
                 variant="caption" component="label" htmlFor={name}
                 sx={{ position: 'absolute', top: '-9px', left: '12px', backgroundColor: (theme) => theme.palette.background.paper, px: '5px', fontSize: '11.5px', color: error ? 'error.main' : 'text.secondary', fontWeight: 500, zIndex: 1 }}
             >
                 {labelText} {isRequired && '*'}
             </Typography>
-            <FormControl fullWidth size="small" error={!!error} disabled={disabled}>
+            <FormControl fullWidth error={!!error} disabled={disabled} sx={{
+                // Áp dụng màu nền transparent cho Select khi disabled
+                '& .MuiOutlinedInput-root.Mui-disabled': {
+                    backgroundColor: 'transparent',
+                },
+                '& .MuiInputBase-input.Mui-disabled': {
+                    WebkitTextFillColor: 'rgba(0, 0, 0, 0.87)', // Giữ màu chữ mặc định
+                    opacity: 1, // Đảm bảo opacity không bị giảm
+                },
+            }}>
                 <Select
                     id={name} name={name} value={value || ''} onChange={onChange}
                     displayEmpty
-                    inputProps={{ style: { paddingTop: '10px', paddingBottom: '10px', fontSize: '0.9rem' } }}
+                    inputProps={{ style: { fontSize: '0.9rem' } }}
+                    sx={{
+                        backgroundColor: 'transparent', // Đảm bảo không có màu nền mặc định cho Select
+                        '& .MuiOutlinedInput-notchedOutline': {
+                            borderColor: '#c0c0c0', // Màu viền mặc định
+                        },
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                            borderColor: '#808080', // Màu viền khi hover
+                        },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                            borderColor: (theme) => theme.palette.primary.main, // Màu viền khi focus
+                            borderWidth: '2px', // Độ dày viền khi focus
+                        },
+                    }}
                 >
                     <MenuItem value="" disabled><em>Chọn...</em></MenuItem>
                     {options.map((option) => (
@@ -59,21 +116,20 @@ const renderFloatingLabelSelectField = ({ name, labelText, value, onChange, erro
 
 
 const UserProfileInfoForm = () => {
-    const { handleAvatarUpdate } = useOutletContext() || {}; // Nhận context, fallback nếu không có
+    const { handleAvatarUpdate } = useOutletContext() || {};
 
     const [profile, setProfile] = useState({
         firstName: '', lastName: '', email: '', phoneNumber: '',
-        province: '', district: '', ward: '', streetAddress: '', avatarUrl: '' // Vẫn giữ avatarUrl ở đây để quản lý logic
+        province: '', district: '', ward: '', streetAddress: '', avatarUrl: ''
     });
     const [initialProfile, setInitialProfile] = useState({});
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [avatarFile, setAvatarFile] = useState(null);
-    // const [avatarPreview, setAvatarPreview] = useState(null); // Không cần preview ở đây nữa
     const [apiMessage, setApiMessage] = useState(null);
     const [errors, setErrors] = useState({});
 
-    const fileInputRef = useRef(null); // Vẫn giữ ref này để gọi input file từ AvatarCard nếu cần (nhưng hiện tại AvatarCard tự quản lý)
+    const fileInputRef = useRef(null);
 
     const provincesData = [{ id: 'HCM', name: 'TP. Hồ Chí Minh' }, { id: 'HN', name: 'Hà Nội' }];
     const districtsData = { HCM: [{ id: 'Q1', name: 'Quận 1' }], HN: [{ id: 'HK', name: 'Hoàn Kiếm' }] };
@@ -93,7 +149,7 @@ const UserProfileInfoForm = () => {
                 };
                 setProfile(initialData);
                 setInitialProfile(initialData);
-                if (handleAvatarUpdate) { // Cập nhật AvatarCard khi load lần đầu
+                if (handleAvatarUpdate) {
                     const preview = data.avatarUrl ? `${process.env.REACT_APP_API_BASE_URL_FOR_FILES}${data.avatarUrl}` : null;
                     handleAvatarUpdate(preview, data.firstName);
                 }
@@ -104,7 +160,7 @@ const UserProfileInfoForm = () => {
             }
         };
         fetchProfile();
-    }, [handleAvatarUpdate]); // Thêm handleAvatarUpdate vào dependency array
+    }, [handleAvatarUpdate]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -113,8 +169,6 @@ const UserProfileInfoForm = () => {
         if (errors[name]) setErrors(prev => ({ ...prev, [name]: null}));
     };
 
-    // Hàm này bây giờ sẽ được gọi từ AvatarCard thông qua input file của nó
-    // Hoặc nếu muốn UserProfileInfoForm vẫn quản lý input file:
     const handleAvatarFileChange = (e) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
@@ -129,9 +183,8 @@ const UserProfileInfoForm = () => {
             }
             setAvatarFile(file);
             const previewUrl = URL.createObjectURL(file);
-            // setAvatarPreview(previewUrl); // Không cần set state preview ở đây nữa
             if (handleAvatarUpdate) {
-                handleAvatarUpdate(previewUrl, profile.firstName); // Cập nhật AvatarCard
+                handleAvatarUpdate(previewUrl, profile.firstName);
             }
             setApiMessage(null);
         }
@@ -142,12 +195,12 @@ const UserProfileInfoForm = () => {
         setIsSubmitting(true);
         setApiMessage(null);
         try {
-            let newAvatarUrl = profile.avatarUrl; // Giữ avatarUrl hiện tại
+            let newAvatarUrl = profile.avatarUrl;
             if (avatarFile) {
                 const formData = new FormData();
                 formData.append('file', avatarFile);
-                const avatarResponse = await uploadAvatar(formData); // Giả sử API trả về { avatarUrl: "new/path/to/image.jpg" }
-                newAvatarUrl = avatarResponse.avatarUrl; // Cập nhật newAvatarUrl nếu có file mới
+                const avatarResponse = await uploadAvatar(formData);
+                newAvatarUrl = avatarResponse.avatarUrl;
             }
 
             const profileToUpdate = {
@@ -158,18 +211,16 @@ const UserProfileInfoForm = () => {
                 district: profile.district,
                 ward: profile.ward,
                 streetAddress: profile.streetAddress,
-                avatarUrl: newAvatarUrl, // Gửi avatarUrl (mới hoặc cũ) lên API update
+                avatarUrl: newAvatarUrl,
             };
             const updateResponse = await updateUserProfile(profileToUpdate);
 
-
-            // Cập nhật state sau khi thành công
-            const updatedProfileData = { ...profileToUpdate }; // Profile đã được gửi đi
+            const updatedProfileData = { ...profileToUpdate };
             setProfile(updatedProfileData);
-            setInitialProfile(updatedProfileData); // Cập nhật initial state để nút Cập nhật disable đúng
-            setAvatarFile(null); // Reset avatar file đã chọn
+            setInitialProfile(updatedProfileData);
+            setAvatarFile(null);
 
-            if (handleAvatarUpdate) { // Cập nhật lại AvatarCard với URL từ server (nếu có thay đổi)
+            if (handleAvatarUpdate) {
                 const preview = newAvatarUrl ? `${process.env.REACT_APP_API_BASE_URL_FOR_FILES}${newAvatarUrl}` : null;
                 handleAvatarUpdate(preview, updatedProfileData.firstName);
             }
@@ -178,10 +229,9 @@ const UserProfileInfoForm = () => {
         } catch (error) {
             const errorData = error.response?.data;
             setApiMessage({ type: 'error', text: errorData?.message || errorData?.title || 'Lỗi cập nhật hồ sơ.' });
-            // Nếu lỗi, có thể muốn revert AvatarCard về trạng thái cũ
             if (handleAvatarUpdate) {
-                 const oldPreview = initialProfile.avatarUrl ? `${process.env.REACT_APP_API_BASE_URL_FOR_FILES}${initialProfile.avatarUrl}` : null;
-                 handleAvatarUpdate(oldPreview, initialProfile.firstName);
+                       const oldPreview = initialProfile.avatarUrl ? `${process.env.REACT_APP_API_BASE_URL_FOR_FILES}${initialProfile.avatarUrl}` : null;
+                       handleAvatarUpdate(oldPreview, initialProfile.firstName);
             }
         } finally {
             setIsSubmitting(false);
@@ -190,58 +240,50 @@ const UserProfileInfoForm = () => {
 
     const hasChanges = JSON.stringify({ ...profile, avatarUrl: avatarFile ? 'new_file_placeholder' : profile.avatarUrl }) !== JSON.stringify(initialProfile) || !!avatarFile;
 
-
     if (isLoading) {
         return <Box sx={{display: 'flex', justifyContent:'center', alignItems:'center', height: '50vh'}}><CircularProgress /></Box>;
     }
 
     return (
-        <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', height: '100%', width:400 /* Để form chiếm hết chiều cao card */ }}>
-            {/* Input file ẩn, AvatarCard sẽ trigger nó nếu cần, hoặc tạo 1 nút riêng trong UserProfileInfoForm nếu không muốn click avatar để tải */}
+        <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', width:650 }}>
             <input type="file" hidden accept=".jpeg,.jpg,.png,.gif" onChange={handleAvatarFileChange} ref={fileInputRef}/>
 
             {apiMessage && <Alert severity={apiMessage.type} sx={{ mb: 2 }} onClose={() => setApiMessage(null)}>{apiMessage.text}</Alert>}
 
-            {/* Bỏ phần Avatar Grid item ở đây */}
-            {/* <Grid item xs={12} md={4} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}> ... </Grid> */}
-
-            {/* Cột Form thông tin - Sắp xếp lại layout */}
-            {/* Bỏ Paper bọc ngoài vì nó đã được bọc bởi Paper trong UserProfilePage */}
-            <Grid container spacing={2.5} sx={{ flexGrow: 1 /* Để grid chiếm không gian còn lại */ }}>
-                {/* Các trường input sẽ được render trong Grid items */}
-                {renderFloatingLabelTextField({ name: "lastName", labelText: "Họ", value: profile.lastName, onChange: handleChange, placeholder: "Nguyễn Văn", disabled: isSubmitting, isRequired: true, gridSm: 6 })}
-                {renderFloatingLabelTextField({ name: "firstName", labelText: "Tên", value: profile.firstName, onChange: handleChange, placeholder: "A", disabled: isSubmitting, isRequired: true, gridSm: 6 })}
+            <Grid container spacing={4.5} sx={{ flexGrow: 1 }}>
+                {/* Các trường input này sẽ dùng minWidth mặc định là 300px và chia 2 cột trên màn hình lớn */}
+                {renderFloatingLabelTextField({ name: "lastName", labelText: "Họ", value: profile.lastName, onChange: handleChange, placeholder: "Nguyễn Văn", disabled: isSubmitting, isRequired: false})}
+                {renderFloatingLabelTextField({ name: "firstName", labelText: "Tên", value: profile.firstName, onChange: handleChange, placeholder: "A", disabled: isSubmitting, isRequired: false})}
 
                 {renderFloatingLabelTextField({
                     name: "phoneNumber", labelText: "Số điện thoại", value: profile.phoneNumber, onChange: handleChange,
-                    placeholder: "09xxxxxxxx", type: "tel", disabled: isSubmitting, isRequired: false, gridSm: 6,
-                    // InputProps cho icon cờ (sẽ cần component như MuiTelInput)
-                    // InputProps={{
-                    //     startAdornment: (
-                    //         <InputAdornment position="start">
-                    //            <img src="/path/to/vietnam_flag.png" alt="VN" style={{width: 20, marginRight: 5}} />
-                    //         </InputAdornment>
-                    //     ),
-                    // }}
+                    placeholder: "09xxxxxxxx", type: "tel", disabled: isSubmitting, isRequired: false,
                 })}
-                {renderFloatingLabelSelectField({ name: "province", labelText: "Tỉnh/Thành phố", value: profile.province, onChange: handleChange, options: provincesData, disabled: isSubmitting, isRequired: false, gridSm: 6 })}
+                {renderFloatingLabelSelectField({ name: "province", labelText: "Tỉnh/Thành phố", value: profile.province, onChange: handleChange, options: provincesData, disabled: isSubmitting, isRequired: false})}
 
-                {renderFloatingLabelSelectField({ name: "district", labelText: "Quận/Huyện", value: profile.district, onChange: handleChange, options: districtsData[profile.province] || [], disabled: isSubmitting, isRequired: false, gridSm: 6 })}
-                {renderFloatingLabelSelectField({ name: "ward", labelText: "Phường/Xã", value: profile.ward, onChange: handleChange, options: wardsData[profile.district] || [], disabled: isSubmitting, isRequired: false, gridSm: 6 })}
+                {renderFloatingLabelSelectField({ name: "district", labelText: "Quận/Huyện", value: profile.district, onChange: handleChange, options: districtsData[profile.province] || [], disabled: isSubmitting, isRequired: false })}
+                {renderFloatingLabelSelectField({ name: "ward", labelText: "Phường/Xã", value: profile.ward, onChange: handleChange, options: wardsData[profile.district] || [], disabled: isSubmitting, isRequired: false})}
 
-                {renderFloatingLabelTextField({ name: "streetAddress", labelText: "Địa chỉ", value: profile.streetAddress, onChange: handleChange, placeholder: "Số nhà, tên đường...", multiline: true, rows: 3, disabled: isSubmitting, isRequired: false, gridSm: 12 })}
+                {/* Ô Địa chỉ: Sẽ chiếm 100% chiều rộng và có minWidth là 300px (theo mặc định của hàm) */}
+                {renderFloatingLabelTextField({
+                    name: "streetAddress",
+                    labelText: "Địa chỉ",
+                    value: profile.streetAddress,
+                    onChange: handleChange,
+                    placeholder: "Số nhà, tên đường...",
+                    disabled: isSubmitting,
+                    isRequired: false,
+                    gridSize: { xs: 12 }, // Chiếm 100% chiều rộng của Grid container
+                    boxSx: { minWidth: '310%' } // Ghi đè minWidth của Box để mở rộng hết chiều rộng của Grid item
+                })}
             </Grid>
 
-            {/* Nút Cập nhật - Căn phải và cách đều */}
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3, pt:2, borderTop: theme => `1px solid ${theme.palette.divider}` /* Đường kẻ phân cách nếu muốn */ }}>
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3, pt:2, }}>
                 <Button
                     type="submit"
                     variant="contained"
                     disabled={isSubmitting || !hasChanges}
-                    sx={{
-                        // Style cho nút giữ nguyên hoặc tùy chỉnh
-                        minWidth: 120, // Để nút có kích thước phù hợp
-                    }}
+                    sx={{ maxWidth: 110, maxHeight:40}}
                     startIcon={isSubmitting ? <CircularProgress size={16} color="inherit"/> : null}
                 >
                     {isSubmitting ? "Đang lưu..." : "Cập nhật"}
