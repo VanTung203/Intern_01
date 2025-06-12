@@ -1,27 +1,22 @@
 // client/src/pages/UserProfilePage.js
 import React from 'react';
-import { Box, Paper, Typography, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Breadcrumbs, Link as MuiLink, useTheme, Avatar, Button } from '@mui/material';
+import { Box, Paper, Typography, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Breadcrumbs, Link as MuiLink, useTheme, Avatar } from '@mui/material';
 import { Link as RouterLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import SecurityOutlinedIcon from '@mui/icons-material/SecurityOutlined';
 import AccountCircleOutlinedIcon from '@mui/icons-material/AccountCircleOutlined';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import { alpha } from '@mui/material/styles';
-import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 
 const menuItems = [
     { text: 'Thông tin tài khoản', icon: <PersonOutlineIcon />, path: '/profile/info' },
     { text: 'Bảo mật tài khoản', icon: <SecurityOutlinedIcon />, path: '/profile/security' },
 ];
 
-// Component Avatar Card
-const AvatarCard = ({ avatarUrl, firstName, onFileSelect }) => {
+// --- AvatarCard Component (ĐÃ SỬA ĐỔI) ---
+// Giờ đây component này đơn giản hơn, chỉ hiển thị và nhận sự kiện click
+const AvatarCard = ({ avatarUrl, firstName, onAvatarClick }) => {
     const theme = useTheme();
-    const fileInputRef = React.useRef(null);
-
-    const handleAvatarClick = () => {
-        fileInputRef.current?.click();
-    };
 
     return (
         <Paper
@@ -36,8 +31,10 @@ const AvatarCard = ({ avatarUrl, firstName, onFileSelect }) => {
                 border: `1px dashed ${theme.palette.divider}`,
                 height: '100%',
                 minHeight: 300,
-                width: '100%'
+                width: '100%',
+                cursor: 'pointer', // Thêm con trỏ để báo hiệu có thể click
             }}
+            onClick={onAvatarClick} // Sự kiện click được xử lý ở đây
         >
             <Avatar
                 src={avatarUrl}
@@ -45,38 +42,15 @@ const AvatarCard = ({ avatarUrl, firstName, onFileSelect }) => {
                     width: 120,
                     height: 120,
                     mb: 2.5,
-                    fontSize: '1rem',
+                    fontSize: '2rem', // Tăng kích thước chữ cho rõ hơn
                     border: `2px dashed ${alpha(theme.palette.text.secondary, 0.3)}`,
-                    cursor: 'pointer',
                 }}
-                onClick={handleAvatarClick}
             >
-                {!avatarUrl && (firstName ? firstName.charAt(0).toUpperCase() : 'a')}
+                {/* Hiển thị chữ cái đầu của Tên nếu không có avatar */}
+                {!avatarUrl && (firstName ? firstName.charAt(0).toUpperCase() : 'T')}
             </Avatar>
             
-            <Button
-                variant="outlined"
-                component="label"
-                size="small"
-                startIcon={<PhotoCameraIcon sx={{fontSize: '1rem'}}/>}
-                sx={{
-                    textTransform:'none', 
-                    fontSize:'0.8rem', 
-                    color:'text.primary', 
-                    borderColor:'grey.400',
-                    mt: 1
-                }}
-                onClick={handleAvatarClick}
-            >
-                Tải ảnh
-                <input 
-                    type="file" 
-                    hidden 
-                    accept=".jpeg,.jpg,.png,.gif" 
-                    onChange={onFileSelect} 
-                    ref={fileInputRef}
-                />
-            </Button>
+            {/* ĐÃ XÓA NÚT "TẢI ẢNH" */}
             
             <Typography 
                 variant="caption" 
@@ -94,6 +68,7 @@ const AvatarCard = ({ avatarUrl, firstName, onFileSelect }) => {
         </Paper>
     );
 };
+
 
 const ProfileSidebar = () => {
     const location = useLocation();
@@ -151,21 +126,68 @@ const ProfileSidebar = () => {
     );
 };
 
+// --- UserProfilePage Component (ĐÃ SỬA ĐỔI) ---
 const UserProfilePage = () => {
     const location = useLocation();
     const theme = useTheme();
     const currentMenuItem = menuItems.find(item => location.pathname.startsWith(item.path)) || menuItems[0];
+    const fileInputRef = React.useRef(null);
 
-    const [avatarPreviewForCard, setAvatarPreviewForCard] = React.useState(null);
-    const [firstNameForCard, setFirstNameForCard] = React.useState('');
+    // --- Quản lý trạng thái được nâng lên component cha ---
+    const [avatarPreview, setAvatarPreview] = React.useState(null);
+    const [avatarFile, setAvatarFile] = React.useState(null); // State cho file object
+    const [userName, setUserName] = React.useState('');
 
-    const handleAvatarUpdate = (previewUrl, name) => {
-        setAvatarPreviewForCard(previewUrl);
-        setFirstNameForCard(name);
+    // Hàm cập nhật thông tin hiển thị (tên và URL preview) từ form con
+    const handleInfoUpdate = (previewUrl, name) => {
+        setAvatarPreview(previewUrl);
+        setUserName(name);
     };
+
+    // Hàm xử lý khi người dùng chọn file
+    const handleFileChange = (event) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            // Kiểm tra kích thước và loại file ở đây để phản hồi nhanh
+            if (file.size > 200 * 1024) {
+                alert('Lỗi: Kích thước file không được vượt quá 200 KB.');
+                return;
+            }
+            const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+            if (!allowedTypes.includes(file.type.toLowerCase())) {
+                 alert('Lỗi: Định dạng file không hợp lệ. Chỉ chấp nhận .jpeg, .jpg, .png, .gif.');
+                return;
+            }
+            
+            // Cập nhật file và preview
+            setAvatarFile(file);
+            setAvatarPreview(URL.createObjectURL(file));
+        }
+    };
+    
+    // Hàm được gọi khi click vào card avatar
+    const handleAvatarClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    // Hàm để form con reset lại file sau khi upload thành công
+    const clearAvatarFile = () => {
+        setAvatarFile(null);
+        if(fileInputRef.current) {
+            fileInputRef.current.value = ""; // Reset input để có thể chọn lại cùng 1 file
+        }
+    }
 
     return (
         <Box sx={{width:'100%'}}>
+             {/* Thẻ input ẩn để chọn file */}
+             <input
+                type="file"
+                hidden
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                accept=".jpeg,.jpg,.png,.gif"
+            />
             {/* Breadcrumbs */}
             <Breadcrumbs 
                 aria-label="breadcrumb" 
@@ -187,37 +209,39 @@ const UserProfilePage = () => {
                 </Typography>
             </Breadcrumbs>
 
-            <Box sx={{ display: 'flex'}}>
+            <Box sx={{ display: 'flex', gap: 3}}>
                 {/* Sidebar */}
-                <Box sx={{ width: { xs: '100%', md: '20%' }, borderRight: '1px solid #e0e0e0' }}>
+                <Box sx={{ width: { xs: '100%', md: '280px' } }}>
                     <ProfileSidebar />
                 </Box>
 
                 {/* Main Content */}
-                <Box sx={{ flex: 1, p: { xs: 2, sm: 3, md: 4 }, overflowY: 'auto' }}>
+                <Box sx={{ flex: 1, overflowY: 'auto' }}>
                     {location.pathname === '/profile/info' || location.pathname === '/profile' ? (
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+                        <Box sx={{ display: 'flex', flexWrap: 'nowrap', gap: 3 }}>
                             {/* Avatar Card - chiếm 1/3 */}
-                            <Box sx={{ flex: { xs: '100%', lg: '1 1 25%' }, display: 'flex', width:'100%' }}>
+                            <Box sx={{ flex: '0 0 300px' }}>
                                 <AvatarCard
-                                    avatarUrl={avatarPreviewForCard}
-                                    firstName={firstNameForCard}
+                                    avatarUrl={avatarPreview}
+                                    firstName={userName}
+                                    onAvatarClick={handleAvatarClick}
                                 />
                             </Box>
 
                             {/* Form Card - chiếm 2/3 */}
-                            <Box sx={{ flex: { xs: '100%', lg: '1 1 65%' }, display: 'flex', width:'100%'  }}>
+                            <Box sx={{ flex: '1 1 auto' }}>
                                 <Paper
                                     elevation={0}
                                     sx={{
-                                        p: { xs: 2, sm: 3, md: 3.5 },
+                                        p: { xs: 2, sm: 3, md: 6.5 },
                                         borderRadius: '12px',
                                         border: `1px solid ${theme.palette.divider}`,
-                                        display: 'flex',
-                                        flexDirection: 'column',
+                                        height: '100%',
+                                        maxWidth: '750px'
                                     }}
                                 >
-                                    <Outlet context={{ handleAvatarUpdate }} />
+                                    {/* Truyền các state và hàm cần thiết cho form con */}
+                                    <Outlet context={{ handleInfoUpdate, avatarFile, clearAvatarFile }} />
                                 </Paper>
                             </Box>
                         </Box>
@@ -229,10 +253,6 @@ const UserProfilePage = () => {
                                 borderRadius: '12px',
                                 height: '100%',
                                 border: `1px solid ${theme.palette.divider}`,
-                                display: 'flex',
-                                flexDirection: 'column',
-                                maxWidth: 1200,
-                                
                             }}
                         >
                             <Outlet />

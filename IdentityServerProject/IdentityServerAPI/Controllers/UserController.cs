@@ -51,104 +51,98 @@ namespace IdentityServerAPI.Controllers
             return await _userService.UpdateUserProfileAsync(User, model);
         }
 
-        [HttpPost("me/avatar")] // Route: POST /api/user/me/avatar
-        public async Task<IActionResult> UploadAvatar(IFormFile file) // Nhận file từ request
+        [HttpPost("me/avatar")]
+        public async Task<IActionResult> UploadAvatar(IFormFile file)
         {
             if (file == null || file.Length == 0)
             {
                 return BadRequest(new { message = "Không có file nào được chọn để tải lên." });
             }
 
-            // Kiểm tra kích thước file (ví dụ: 200KB = 200 * 1024 bytes)
-            // Có thể đặt giá trị này vào appsettings.json
             long maxFileSize = 200 * 1024;
             if (file.Length > maxFileSize)
             {
                 return BadRequest(new { message = $"Kích thước file vượt quá giới hạn cho phép ({maxFileSize / 1024}KB)." });
             }
 
-            // Kiểm tra định dạng file
             var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif" };
             var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
             if (string.IsNullOrEmpty(extension) || !allowedExtensions.Contains(extension))
             {
-                return BadRequest(new { message = "Định dạng file không hợp lệ. Chỉ chấp nhận các định dạng: " + string.Join(", ", allowedExtensions) });
+                return BadRequest(new { message = "Định dạng file không hợp lệ. Chỉ chấp nhận: " + string.Join(", ", allowedExtensions) });
             }
 
-            // Lấy thông tin người dùng hiện tại
             var user = await _userManager.GetUserAsync(User);
             if (user == null)
             {
-                return NotFound(new { message = "Không tìm thấy người dùng." }); // Hoặc Unauthorized nếu token không hợp lệ
+                return NotFound(new { message = "Không tìm thấy người dùng." });
             }
 
             try
             {
-                // Tạo đường dẫn và tên file duy nhất
-                var uploadsFolderPath = Path.Combine(_webHostEnvironment.WebRootPath ?? string.Empty, "avatars"); // Thư mục lưu avatars
-                if (string.IsNullOrEmpty(_webHostEnvironment.WebRootPath))
+                // --- FIX 1: XÂY DỰNG ĐƯỜNG DẪN TỪ CONTENTROOTPATH ---
+                // Sử dụng ContentRootPath (luôn tồn tại) thay vì WebRootPath (có thể null)
+                // Điều này làm cho code hoạt động ngay cả khi thư mục wwwroot chưa được tạo.
+                var wwwRootPath = Path.Combine(_webHostEnvironment.ContentRootPath, "wwwroot");
+                var avatarsFolderPath = Path.Combine(wwwRootPath, "avatars");
+
+                // Tạo thư mục 'wwwroot/avatars' nếu nó chưa tồn tại.
+                // Directory.CreateDirectory sẽ tạo cả thư mục cha nếu cần.
+                if (!Directory.Exists(avatarsFolderPath))
                 {
-                    // Log lỗi: WebRootPath is not configured.
-                    return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Lỗi cấu hình server: không tìm thấy thư mục gốc web." });
+                    Directory.CreateDirectory(avatarsFolderPath);
                 }
 
-                if (!Directory.Exists(uploadsFolderPath))
+                // Xóa avatar cũ nếu có
+                if (!string.IsNullOrEmpty(user.AvatarUrl))
                 {
-                    Directory.CreateDirectory(uploadsFolderPath); // Tạo thư mục nếu chưa có
-                }
-
-                // Xóa avatar cũ (nếu có và không phải là avatar mặc định)
-                if (!string.IsNullOrEmpty(user.AvatarUrl) && !user.AvatarUrl.EndsWith("default-avatar.png")) // Giả sử có default-avatar.png
-                {
-                    var oldAvatarPath = Path.Combine(_webHostEnvironment.WebRootPath, user.AvatarUrl.TrimStart('/'));
-                    if (System.IO.File.Exists(oldAvatarPath))
+                    // user.AvatarUrl có dạng "/avatars/filename.jpg"
+                    var oldAvatarFileName = Path.GetFileName(user.AvatarUrl);
+                    var oldAvatarFullPath = Path.Combine(avatarsFolderPath, oldAvatarFileName);
+                    if (System.IO.File.Exists(oldAvatarFullPath))
                     {
                         try
                         {
-                            System.IO.File.Delete(oldAvatarPath);
+                            System.IO.File.Delete(oldAvatarFullPath);
                         }
-                        catch (IOException ex)
+                        catch (IOException)
                         {
-                            // Log lỗi xóa file cũ, nhưng vẫn tiếp tục upload file mới
-                            // _logger.LogError(ex, $"Could not delete old avatar: {oldAvatarPath}");
+                            // Ghi log lỗi xóa file cũ, nhưng vẫn tiếp tục upload file mới
                         }
                     }
                 }
 
-                // Tạo tên file mới để tránh trùng lặp và các vấn đề bảo mật với tên file gốc
-                var uniqueFileName = $"{Guid.NewGuid().ToString()}{extension}";
-                var filePath = Path.Combine(uploadsFolderPath, uniqueFileName);
+                var uniqueFileName = $"{Guid.NewGuid()}{extension}";
+                var newAvatarFullPath = Path.Combine(avatarsFolderPath, uniqueFileName);
 
-                // Lưu file mới
-                using (var stream = new FileStream(filePath, FileMode.Create))
+                using (var stream = new FileStream(newAvatarFullPath, FileMode.Create))
                 {
                     await file.CopyToAsync(stream);
                 }
 
-                // Cập nhật đường dẫn avatar cho người dùng
-                // Đường dẫn lưu trong database nên là đường dẫn tương đối có thể truy cập từ web
-                user.AvatarUrl = $"/avatars/{uniqueFileName}";
-                user.UpdatedAt = DateTime.UtcNow; // Cập nhật thời gian
+                // Đường dẫn lưu trong DB là đường dẫn tương đối để web có thể truy cập
+                var relativePath = $"/avatars/{uniqueFileName}";
+                user.AvatarUrl = relativePath;
+                user.UpdatedAt = DateTime.UtcNow;
 
                 var updateResult = await _userManager.UpdateAsync(user);
 
                 if (!updateResult.Succeeded)
                 {
-                    // Nếu cập nhật user thất bại, xóa file vừa tải lên
-                    if (System.IO.File.Exists(filePath))
+                    if (System.IO.File.Exists(newAvatarFullPath))
                     {
-                        System.IO.File.Delete(filePath);
+                        System.IO.File.Delete(newAvatarFullPath);
                     }
                     var errors = updateResult.Errors.Select(e => new { code = e.Code, description = e.Description });
-                    return BadRequest(new { title = "Lỗi khi cập nhật thông tin người dùng với avatar mới.", errors = errors });
+                    return BadRequest(new { title = "Lỗi khi cập nhật avatar.", errors });
                 }
 
-                return Ok(new { message = "Avatar đã được tải lên và cập nhật thành công.", avatarUrl = user.AvatarUrl });
+                // --- FIX 2: TRẢ VỀ 'filePath' ĐỂ KHỚP VỚI FRONTEND ---
+                return Ok(new { message = "Avatar đã được cập nhật thành công.", filePath = user.AvatarUrl });
             }
             catch (Exception ex)
             {
-                // Log lỗi chi tiết ở đây
-                // _logger.LogError(ex, "Error occurred while uploading avatar.");
+                // Ghi log lỗi chi tiết ở đây, ví dụ: _logger.LogError(ex, "Lỗi upload avatar");
                 return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Đã có lỗi xảy ra trên máy chủ khi tải lên avatar." });
             }
         }
