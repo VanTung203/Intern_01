@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import {
     Box, Typography, CircularProgress, Alert, Paper, Table, TableBody, TableCell,
-    TableContainer, TableHead, TableRow, Chip, Avatar, IconButton, Menu, MenuItem,
+    TableContainer, TableHead, TableRow, Avatar, IconButton, Menu, MenuItem,
     InputAdornment, TextField, Button, Select, FormControl, InputLabel,
     ListItemIcon, ListItemText, Divider
 } from '@mui/material';
@@ -17,6 +17,7 @@ import { useAuth } from '../../context/AuthContext';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import SearchIcon from '@mui/icons-material/Search';
 import AddIcon from '@mui/icons-material/Add';
+import PersonIcon from '@mui/icons-material/Person';
 // Import các icons Trạng thái
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import DoNotDisturbOnIcon from '@mui/icons-material/DoNotDisturbOn';
@@ -289,7 +290,7 @@ const UserListPage = () => {
                 <Box>
                     <IconButton onClick={handleAccountMenuOpen} size="small">
                         <Avatar src={getFullAvatarUrl(user?.avatarUrl)} sx={{ width: 40, height: 40, bgcolor: 'text.primary' }}>
-                            {user?.firstName ? user.firstName.charAt(0).toUpperCase() : 'A'}
+                            <PersonIcon />
                         </Avatar>
                     </IconButton>
                     <Menu
