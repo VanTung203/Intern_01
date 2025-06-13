@@ -184,7 +184,7 @@ const ChangePasswordForm = () => {
 
       {renderFloatingLabelTextField({
         name: "currentPassword",
-        labelText: "Mật khẩu của bạn",
+        labelText: "Mật khẩu hiện tại",
         type: showCurrentPassword ? "text" : "password",
         value: formData.currentPassword,
         onChange: handleChange,

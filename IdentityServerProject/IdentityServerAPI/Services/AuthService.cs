@@ -7,7 +7,7 @@ using Microsoft.IdentityModel.Tokens;
 using IdentityServerAPI.Models;
 using IdentityServerAPI.DTOs;
 using IdentityServerAPI.Services.Interfaces;
-using IdentityServerAPI.Configuration; // Đảm bảo bạn có class JwtSettings ở đây
+using IdentityServerAPI.Configuration;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
@@ -400,11 +400,31 @@ namespace IdentityServerAPI.Services
                 return new UnauthorizedObjectResult(new { message = "Người dùng không hợp lệ." });
             }
 
+            // --- BƯỚC 1: KIỂM TRA MẬT KHẨU MỚI CÓ TRÙNG VỚI MẬT KHẨU CŨ KHÔNG ---
+            // Chúng ta không thể so sánh trực tiếp với PasswordHash.
+            // Thay vào đó, dùng CheckPasswordAsync để kiểm tra xem mật khẩu mới có khớp với mật khẩu đang lưu không.
+            var isSameAsOldPassword = await _userManager.CheckPasswordAsync(user, model.NewPassword);
+            if (isSameAsOldPassword)
+            {
+                return new BadRequestObjectResult(new
+                {
+                    title = "Đổi mật khẩu thất bại",
+                    errors = new[]
+                    {
+                        new { code = "PasswordInUse", description = "Mật khẩu mới đang được sử dụng, bạn vui lòng nhập mật khẩu khác" }
+                    }
+                });
+            }
+            // --- KẾT THÚC BƯỚC 1 ---
+
+            // Nếu không trùng, tiếp tục quy trình đổi mật khẩu bình thường
             var changePasswordResult = await _userManager.ChangePasswordAsync(user, model.CurrentPassword, model.NewPassword);
             if (!changePasswordResult.Succeeded)
             {
                 var errors = changePasswordResult.Errors.Select(e => new { code = e.Code, description = e.Description });
                 _logger.LogWarning("Password change failed for user {UserId}: {Errors}", userIdString, string.Join(", ", changePasswordResult.Errors.Select(e => e.Description)));
+                
+                // Trả về lỗi chung từ Identity, ví dụ: "Mật khẩu hiện tại không đúng".
                 return new BadRequestObjectResult(new { title = "Đổi mật khẩu thất bại", errors = errors });
             }
 
