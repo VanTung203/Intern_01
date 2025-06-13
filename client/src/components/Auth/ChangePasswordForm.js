@@ -63,7 +63,6 @@ const renderFloatingLabelTextField = ({
       InputProps={InputProps}
       inputProps={inputProps || { style: { paddingTop: '10px', paddingBottom: '10px', fontSize: '0.9rem' } }}
       variant="outlined" // Đảm bảo luôn sử dụng variant "outlined" để có viền
-      // **THÊM ĐOẠN CODE CỦA BẠN VÀO ĐÂY**
       sx={{
         '& .MuiOutlinedInput-root': {
           backgroundColor: 'transparent', // Đảm bảo không có màu nền mặc định cho TextField

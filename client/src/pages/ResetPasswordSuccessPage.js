@@ -34,7 +34,7 @@ const ResetPasswordSuccessPageContent = () => {
             </Typography>
             <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
                 {messageFromServer} 
-                {/* <br/>Bạn có thể đăng nhập ngay bây giờ. */}
+                {/* <br/> có thể đăng nhập ngay bây giờ. */}
             </Typography>
             <Button component={RouterLink} to="/login" variant="contained" color="primary" sx={{ mt: 2 }}>
                 Đi đến Đăng nhập

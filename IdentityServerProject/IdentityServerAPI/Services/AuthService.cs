@@ -127,8 +127,6 @@ namespace IdentityServerAPI.Services
             }
         }
 
-        // Phương thức ConfirmUserEmailAsync giữ nguyên như code bạn đã cung cấp gần nhất,
-        // vì nó đã xử lý redirect về /email-confirmed hoặc /login?params...
         public async Task<IActionResult> ConfirmUserEmailAsync(string userId, string token, string frontendLoginUrl)
         {
             string defaultRedirectBase = _configuration["FrontendUrls:Base"] ?? "http://localhost:3000";

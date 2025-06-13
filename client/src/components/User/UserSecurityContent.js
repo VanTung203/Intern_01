@@ -95,7 +95,7 @@ const UserSecurityContent = () => {
                   Quan trọng: Lưu lại các mã khôi phục này ở nơi an toàn.
                 </Typography>
                 <Typography variant="body2" color="textSecondary">
-                  Nếu bạn mất quyền truy cập vào phương thức xác thực 2 lớp, bạn có thể sử dụng một trong các mã này để đăng nhập. Mỗi mã chỉ có thể sử dụng một lần.
+                  Nếu mất quyền truy cập vào phương thức xác thực 2 lớp, có thể sử dụng một trong các mã này để đăng nhập. Mỗi mã chỉ có thể sử dụng một lần.
                 </Typography>
                 <List dense>
                   {recoveryCodes.map((code, index) => (
