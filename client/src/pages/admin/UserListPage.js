@@ -4,13 +4,14 @@ import {
     Box, Typography, CircularProgress, Alert, Paper, Table, TableBody, TableCell,
     TableContainer, TableHead, TableRow, Chip, Avatar, IconButton, Menu, MenuItem,
     InputAdornment, TextField, Button, Select, FormControl, InputLabel,
-    ListItemIcon, ListItemText
+    ListItemIcon, ListItemText, Divider
 } from '@mui/material';
 import { getAllUsers, lockUser, unlockUser, deleteUser } from '../../services/userService';
 import UserCreateDialog from '../../components/admin/UserCreateDialog';
 import UserDetailsDialog from '../../components/admin/UserDetailsDialog';
 import UserResetPasswordDialog from '../../components/admin/UserResetPasswordDialog';
 import UserDeleteConfirmDialog from '../../components/admin/UserDeleteConfirmDialog';
+import { useAuth } from '../../context/AuthContext';
 
 // Import các icons cần thiết
 import MoreVertIcon from '@mui/icons-material/MoreVert';
@@ -25,7 +26,8 @@ import { TablePagination } from '@mui/material';
 // Import các icons giao diện Thao tác
 import InfoIcon from '@mui/icons-material/Info'; 
 import LockResetIcon from '@mui/icons-material/LockReset';            
-import DeleteIcon from '@mui/icons-material/Delete';     
+import DeleteIcon from '@mui/icons-material/Delete';
+import Logout from '@mui/icons-material/Logout';
 
 const UserListPage = () => {
     // State cho dữ liệu
@@ -52,6 +54,11 @@ const UserListPage = () => {
     const [isSubmittingAction, setIsSubmittingAction] = useState(false);
     const [actionError, setActionError] = useState('');
 
+    // Khai báo các biến và state cần thiết cho các hàm xử lý (handleLogout) và phần giao diện (JSX) cho menu đăng xuất
+    const { user, logoutAction } = useAuth();
+    const [accountMenuAnchor, setAccountMenuAnchor] = useState(null);
+    const isAccountMenuOpen = Boolean(accountMenuAnchor);
+
     // GỌI API
     // Dùng useCallback để tránh fetchUsers được tạo lại không cần thiết
     const fetchUsers = useCallback(async () => {
@@ -67,9 +74,7 @@ const UserListPage = () => {
         }
     }, [appliedSearch, statusFilter]); // Chỉ chạy lại khi 'appliedSearch' và statusFilter thay đổi
 
-    useEffect(() => {
-        fetchUsers();
-    }, [fetchUsers]);
+    useEffect(() => { fetchUsers(); }, [fetchUsers]);
 
     // --- Các hàm xử lý sự kiện ---
 
@@ -219,6 +224,21 @@ const UserListPage = () => {
         }
     };
 
+    //THÊM CÁC HÀM XỬ LÝ CHO MENU ĐĂNG XUẤT
+    const handleAccountMenuOpen = (event) => {
+        setAccountMenuAnchor(event.currentTarget);
+    };
+    const handleAccountMenuClose = () => {
+        setAccountMenuAnchor(null);
+    };
+    const handleLogout = () => {
+        handleAccountMenuClose();
+        logoutAction();
+    };
+    const getFullAvatarUrl = (relativePath) => {
+      if (!relativePath) return null;
+      return `${process.env.REACT_APP_API_BASE_URL_FOR_FILES}${relativePath}`;
+    };
 
     // --- Các hàm render phụ ---
     const renderStatus = (user) => {
@@ -259,11 +279,55 @@ const UserListPage = () => {
     }
 
     return (
-        <Box sx={{ }}>
-            {/* Breadcrumbs - Phần này có thể thêm sau nếu cần layout phức tạp hơn */}
-            <Typography variant="h6" gutterBottom>
-                Quản lý Người dùng
-            </Typography>
+        <Box>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="h6" component="h1" gutterBottom sx={{ mb: 0 }}>
+                    Quản lý Người dùng
+                </Typography>
+                
+                {/* Nút bấm Avatar và Menu đăng xuất */}
+                <Box>
+                    <IconButton onClick={handleAccountMenuOpen} size="small">
+                        <Avatar src={getFullAvatarUrl(user?.avatarUrl)} sx={{ width: 40, height: 40, bgcolor: 'text.primary' }}>
+                            {user?.firstName ? user.firstName.charAt(0).toUpperCase() : 'A'}
+                        </Avatar>
+                    </IconButton>
+                    <Menu
+                        anchorEl={accountMenuAnchor}
+                        id="account-menu"
+                        open={isAccountMenuOpen}
+                        onClose={handleAccountMenuClose}
+                        onClick={handleAccountMenuClose}
+                        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+                        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+                        PaperProps={{
+                            elevation: 0,
+                            sx: {
+                                overflow: 'visible',
+                                filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.15))',
+                                mt: 1.5,
+                                width: 220,
+                            },
+                        }}
+                    >
+                        <Box sx={{ my: 1.5, px: 2.5 }}>
+                            <Typography variant="subtitle2" noWrap>
+                                {user ? `${user.lastName} ${user.firstName}` : ''}
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: 'text.secondary' }} noWrap>
+                                {user?.email}
+                            </Typography>
+                        </Box>
+                        <Divider />
+                        <MenuItem onClick={handleLogout} sx={{ color: 'error.main', mt: 1 }}>
+                            <ListItemIcon>
+                                <Logout fontSize="small" color="error" />
+                            </ListItemIcon>
+                            Đăng xuất
+                        </MenuItem>
+                    </Menu>
+                </Box>
+            </Box>
 
             {/* Thanh công cụ tìm kiếm và lọc */}
             <Paper sx={{ p: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
