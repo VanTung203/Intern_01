@@ -1,20 +1,23 @@
 // client/src/pages/UserProfilePage.js
-import React from 'react';
-import { Box, Paper, Typography, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Breadcrumbs, Link as MuiLink, useTheme, Avatar } from '@mui/material';
+import React, { useState } from 'react';
+import { 
+    Box, Paper, Typography, List, ListItem, ListItemButton, ListItemIcon, ListItemText, 
+    Breadcrumbs, Link as MuiLink, useTheme, Avatar, Divider, Menu, MenuItem } from '@mui/material';
 import { Link as RouterLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import SecurityOutlinedIcon from '@mui/icons-material/SecurityOutlined';
 import AccountCircleOutlinedIcon from '@mui/icons-material/AccountCircleOutlined';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
+import Logout from '@mui/icons-material/Logout';
 import { alpha } from '@mui/material/styles';
+import { useAuth } from '../context/AuthContext';
 
 const menuItems = [
     { text: 'Thông tin tài khoản', icon: <PersonOutlineIcon />, path: '/profile/info' },
     { text: 'Bảo mật tài khoản', icon: <SecurityOutlinedIcon />, path: '/profile/security' },
 ];
 
-// --- AvatarCard Component (ĐÃ SỬA ĐỔI) ---
-// Giờ đây component này đơn giản hơn, chỉ hiển thị và nhận sự kiện click
+// AvatarCard Component
 const AvatarCard = ({ avatarUrl, firstName, onAvatarClick }) => {
     const theme = useTheme();
 
@@ -69,11 +72,33 @@ const AvatarCard = ({ avatarUrl, firstName, onAvatarClick }) => {
     );
 };
 
-
+// ProfileSidebar
 const ProfileSidebar = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const theme = useTheme();
+    const { user, logoutAction } = useAuth(); // Lấy user và hàm logout từ context
+
+    const [anchorEl, setAnchorEl] = useState(null);
+    const open = Boolean(anchorEl);
+
+    const handleClick = (event) => {
+        setAnchorEl(event.currentTarget);
+    };
+
+    const handleClose = () => {
+        setAnchorEl(null);
+    };
+    
+    const handleLogout = () => {
+        handleClose();
+        logoutAction();
+    }
+
+    const getFullAvatarUrl = (relativePath) => {
+      if (!relativePath) return null;
+      return `${process.env.REACT_APP_API_BASE_URL_FOR_FILES}${relativePath}`;
+    };
 
     return (
         <Paper 
@@ -83,35 +108,86 @@ const ProfileSidebar = () => {
                 borderRadius: '12px', 
                 p: 1.5, 
                 backgroundColor: theme.palette.background.paper, 
-                border: `1px solid ${theme.palette.divider}` 
+                border: `1px solid ${theme.palette.divider}`,
+                display: 'flex',
+                flexDirection: 'column'
             }}
         >
+            {/* User Account Box */}
+            <Box
+                onClick={handleClick}
+                sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 2,
+                    p: 1.5,
+                    mb: 1.5,
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    backgroundColor: open ? alpha(theme.palette.action.selected, 0.1) : 'transparent',
+                    '&:hover': {
+                        backgroundColor: alpha(theme.palette.action.hover, 0.04)
+                    }
+                }}
+            >
+                <Avatar src={getFullAvatarUrl(user?.avatarUrl)} sx={{ width: 40, height: 40 }}>
+                   {user?.firstName ? user.firstName.charAt(0).toUpperCase() : 'A'}
+                </Avatar>
+                <Box sx={{ flexGrow: 1, overflow: 'hidden' }}>
+                    <Typography variant="subtitle2" noWrap sx={{fontWeight: 600}}>
+                        {user ? `${user.lastName} ${user.firstName}` : 'Loading...'}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" noWrap>
+                        {user?.email}
+                    </Typography>
+                </Box>
+            </Box>
+            
+            {/* Menu đăng xuất */}
+            <Menu
+                anchorEl={anchorEl}
+                id="account-menu"
+                open={open}
+                onClose={handleClose}
+                onClick={handleClose}
+                transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+                anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+                PaperProps={{
+                    elevation: 0,
+                    sx: {
+                        overflow: 'visible',
+                        filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.15))',
+                        mt: 1.5,
+                        width: 200,
+                        '& .MuiAvatar-root': {
+                            width: 32,
+                            height: 32,
+                            ml: -0.5,
+                            mr: 1,
+                        },
+                    },
+                }}
+            >
+                <MenuItem onClick={handleLogout} sx={{color: 'error.main'}}>
+                    <ListItemIcon>
+                        <Logout fontSize="small" color="error" />
+                    </ListItemIcon>
+                    Đăng xuất
+                </MenuItem>
+            </Menu>
+
+            <Divider sx={{mb: 1.5}}/>
+
+            {/* Navigation List */}
             <List sx={{ p: 0 }}>
                 {menuItems.map((item) => {
-                    const isActive = location.pathname === item.path || (location.pathname === '/profile' && item.path === '/profile/info');
+                    const isActive = location.pathname.startsWith(item.path);
                     return (
                         <ListItem key={item.text} disablePadding sx={{ mb: 0.75 }}>
                             <ListItemButton
                                 selected={isActive}
                                 onClick={() => navigate(item.path)}
-                                sx={{
-                                    borderRadius: '8px',
-                                    py: 1.15,
-                                    px: 1.5,
-                                    color: isActive ? theme.palette.primary.main : theme.palette.text.secondary,
-                                    backgroundColor: isActive ? alpha(theme.palette.primary.main, 0.1) : 'transparent',
-                                    '&:hover': {
-                                        backgroundColor: isActive ? alpha(theme.palette.primary.main, 0.15) : alpha(theme.palette.text.primary, 0.04),
-                                    },
-                                    '& .MuiListItemIcon-root': {
-                                        minWidth: 32,
-                                        color: isActive ? theme.palette.primary.main : theme.palette.text.secondary,
-                                    },
-                                    '& .MuiListItemText-primary': {
-                                        fontWeight: isActive ? 600 : 500,
-                                        fontSize: '0.9rem',
-                                    }
-                                }}
+                                sx={{ borderRadius: '8px', py: 1.15, px: 1.5, color: isActive ? theme.palette.primary.main : theme.palette.text.secondary, backgroundColor: isActive ? alpha(theme.palette.primary.main, 0.1) : 'transparent', '&:hover': { backgroundColor: isActive ? alpha(theme.palette.primary.main, 0.15) : alpha(theme.palette.text.primary, 0.04), }, '& .MuiListItemIcon-root': { minWidth: 32, color: isActive ? theme.palette.primary.main : theme.palette.text.secondary, }, '& .MuiListItemText-primary': { fontWeight: isActive ? 600 : 500, fontSize: '0.9rem', } }}
                             >
                                 <ListItemIcon>
                                     {item.icon}
