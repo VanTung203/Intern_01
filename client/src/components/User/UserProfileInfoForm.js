@@ -115,15 +115,15 @@ const UserProfileInfoForm = () => {
         fetchProfile();
     }, [handleInfoUpdate]);
     
-    // Gửi tên lên component cha mỗi khi thay đổi
-    useEffect(() => {
-        if(handleInfoUpdate && profile.firstName !== initialProfile.firstName) {
-            handleInfoUpdate(
-                profile.avatarUrl ? `${process.env.REACT_APP_API_BASE_URL_FOR_FILES}${profile.avatarUrl}` : null,
-                profile.firstName
-            );
-        }
-    }, [profile.firstName, profile.avatarUrl, initialProfile.firstName, handleInfoUpdate]);
+    // Gửi tên lên component cha mỗi khi thay đổi [TẠM THỜI XÓA ĐOẠN CODE]
+    // useEffect(() => {
+    //     if(handleInfoUpdate && profile.firstName !== initialProfile.firstName) {
+    //         handleInfoUpdate(
+    //             profile.avatarUrl ? `${process.env.REACT_APP_API_BASE_URL_FOR_FILES}${profile.avatarUrl}` : null,
+    //             profile.firstName
+    //         );
+    //     }
+    // }, [profile.firstName, profile.avatarUrl, initialProfile.firstName, handleInfoUpdate]);
 
 
     const handleChange = (e) => {
@@ -213,9 +213,9 @@ const UserProfileInfoForm = () => {
             {apiMessage && <Alert severity={apiMessage.type} sx={{ mb: 2 }} onClose={() => setApiMessage(null)}>{apiMessage.text}</Alert>}
 
             <Grid container spacing={3} sx={{ flexGrow: 1 }}>
-                {renderFloatingLabelTextField({ name: "lastName", labelText: "Họ", value: profile.lastName, onChange: handleChange, placeholder: "Văn", disabled: isSubmitting})}
-                {renderFloatingLabelTextField({ name: "firstName", labelText: "Tên", value: profile.firstName, onChange: handleChange, placeholder: "Tùng", disabled: isSubmitting})}
-                {renderFloatingLabelTextField({ name: "phoneNumber", labelText: "Số điện thoại", value: profile.phoneNumber, onChange: handleChange, placeholder: "09xxxxxxxx", type: "tel", disabled: isSubmitting })}
+                {renderFloatingLabelTextField({ name: "lastName", labelText: "Họ", value: profile.lastName, onChange: handleChange, placeholder: "Nguyễn Văn...", disabled: isSubmitting})}
+                {renderFloatingLabelTextField({ name: "firstName", labelText: "Tên", value: profile.firstName, onChange: handleChange, placeholder: "A...", disabled: isSubmitting})}
+                {renderFloatingLabelTextField({ name: "phoneNumber", labelText: "Số điện thoại", value: profile.phoneNumber, onChange: handleChange, placeholder: "0xxxxxxxxx", type: "tel", disabled: isSubmitting })}
                 {renderFloatingLabelSelectField({ name: "province", labelText: "Tỉnh/Thành phố", value: profile.province, onChange: handleChange, options: provincesData, disabled: isSubmitting })}
                 {renderFloatingLabelSelectField({ name: "district", labelText: "Quận/Huyện", value: profile.district, onChange: handleChange, options: districtsData[profile.province] || [], disabled: !profile.province || isSubmitting })}
                 {renderFloatingLabelSelectField({ name: "ward", labelText: "Phường/Xã", value: profile.ward, onChange: handleChange, options: wardsData[profile.district] || [], disabled: !profile.district || isSubmitting })}

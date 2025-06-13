@@ -60,15 +60,45 @@ namespace IdentityServerAPI.Services
                 return new NotFoundObjectResult(new { message = "Không tìm thấy người dùng." });
             }
 
-            // Cập nhật các thuộc tính của user từ model DTO
-            user.FirstName = model.FirstName;
-            user.LastName = model.LastName;
-            user.PhoneNumber = model.PhoneNumber; // Cập nhật các trường mới
-            user.Province = model.Province;
-            user.District = model.District;
-            user.Ward = model.Ward;
-            user.StreetAddress = model.StreetAddress;
-            user.UpdatedAt = DateTime.UtcNow; // Cập nhật thời gian sửa đổi
+            // --- SỬA ĐỔI LOGIC CẬP NHẬT ---
+            // Chỉ cập nhật các trường nếu giá trị từ model không phải là `null`.
+            // Điều này cho phép người dùng gửi lên một chuỗi rỗng "" để xóa nội dung một trường.
+
+            if (model.FirstName != null)
+            {
+                user.FirstName = model.FirstName;
+            }
+            if (model.LastName != null)
+            {
+                user.LastName = model.LastName;
+            }
+            if (model.PhoneNumber != null) 
+            {
+                user.PhoneNumber = model.PhoneNumber;
+            }
+            if (model.Province != null) 
+            {
+                user.Province = model.Province;
+            }
+            if (model.District != null) 
+            {
+                user.District = model.District;
+            }
+            if (model.Ward != null) 
+            {
+                user.Ward = model.Ward;
+            }
+            if (model.StreetAddress != null) 
+            {
+                user.StreetAddress = model.StreetAddress;
+            }
+            // Logic này để xử lý việc cập nhật avatarUrl từ handleSubmit của form
+            if (model.AvatarUrl != null)
+            {
+                user.AvatarUrl = model.AvatarUrl;
+            }
+
+            user.UpdatedAt = DateTime.UtcNow;
 
             // Lưu các thay đổi vào database
             var result = await _userManager.UpdateAsync(user);
