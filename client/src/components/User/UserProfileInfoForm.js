@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Box, Grid, TextField, Button, Typography, CircularProgress, Select, MenuItem, FormControl, FormHelperText, Alert } from '@mui/material';
 import { getUserProfile, updateUserProfile, uploadAvatar } from '../../services/userService';
 import { useOutletContext } from 'react-router-dom';
+import axios from 'axios'; // Import axios để gọi API
 
 // --- Các component renderFloatingLabel... giữ nguyên như cũ ---
 const renderFloatingLabelTextField = ({ name, labelText, placeholder, type = 'text', value, onChange, error, disabled, isRequired = false, multiline = false, rows = 1, InputProps, gridSize = { xs: 12, sm: 6 }, boxSx }) => (
@@ -47,7 +48,7 @@ const renderFloatingLabelSelectField = ({ name, labelText, value, onChange, erro
             <FormControl fullWidth error={!!error} disabled={disabled} sx={{ '& .MuiOutlinedInput-root.Mui-disabled': { backgroundColor: 'transparent' }, '& .MuiInputBase-input.Mui-disabled': { WebkitTextFillColor: 'rgba(0, 0, 0, 0.87)' } }}>
                 <Select id={name} name={name} value={value || ''} onChange={onChange} displayEmpty inputProps={{ style: { fontSize: '0.9rem' } }}>
                     <MenuItem value="" disabled><em>Chọn...</em></MenuItem>
-                    {options.map((option) => ( <MenuItem key={option.id || option.value || option} value={option.id || option.value || option}> {option.name || option} </MenuItem>))}
+                    {options.map((option) => ( <MenuItem key={option.code} value={option.code}> {option.name} </MenuItem>))}
                 </Select>
                 {error && <FormHelperText sx={{ml: '14px'}}>{error}</FormHelperText>}
             </FormControl>
@@ -71,12 +72,17 @@ const UserProfileInfoForm = () => {
     const [apiMessage, setApiMessage] = useState(null);
     const [errors, setErrors] = useState({});
 
-    // Dữ liệu địa chỉ giả định
-    const provincesData = [{ id: 'HCM', name: 'TP. Hồ Chí Minh' }, { id: 'HN', name: 'Hà Nội' }];
-    const districtsData = { HCM: [{ id: 'Q1', name: 'Quận 1' }], HN: [{ id: 'HK', name: 'Hoàn Kiếm' }] };
-    const wardsData = { Q1: [{ id: 'BT', name: 'Bến Thành' }], HK: [{ id: 'HG', name: 'Hàng Gai' }] };
+    // // Dữ liệu địa chỉ giả định
+    // const provincesData = [{ id: 'HCM', name: 'TP. Hồ Chí Minh' }, { id: 'HN', name: 'Hà Nội' }];
+    // const districtsData = { HCM: [{ id: 'Q1', name: 'Quận 1' }], HN: [{ id: 'HK', name: 'Hoàn Kiếm' }] };
+    // const wardsData = { Q1: [{ id: 'BT', name: 'Bến Thành' }], HK: [{ id: 'HG', name: 'Hàng Gai' }] };
 
-        // --- HÀM TẠO URL ĐẦY ĐỦ CHO AVATAR ---
+    // THÊM STATE CHO DỮ LIỆU ĐỊA CHỈ TỪ API
+    const [provinces, setProvinces] = useState([]);
+    const [districts, setDistricts] = useState([]);
+    const [wards, setWards] = useState([]);
+
+    // --- HÀM TẠO URL ĐẦY ĐỦ CHO AVATAR ---
     const getFullAvatarUrl = (relativePath) => {
         if (!relativePath) {
             return null;
@@ -86,7 +92,99 @@ const UserProfileInfoForm = () => {
         return `${process.env.REACT_APP_API_BASE_URL_FOR_FILES}${relativePath}`;
     };
 
-    // Fetch dữ liệu ban đầu
+    // TÍCH HỢP API VÀO CÁC `useEffect`
+
+    // 1. useEffect: Lấy danh sách Tỉnh/Thành phố và dữ liệu profile người dùng CÙNG LÚC
+    useEffect(() => {
+        const fetchInitialData = async () => {
+            setIsLoading(true);
+            try {
+                // Gọi cả hai API song song để tiết kiệm thời gian
+                const [provincesRes, profileRes] = await Promise.all([
+                    axios.get('https://provinces.open-api.vn/api/p/'),
+                    getUserProfile()
+                ]);
+
+                const loadedProvinces = provincesRes.data;
+                setProvinces(loadedProvinces);
+                
+                // Tìm mã code tương ứng với tên đã lưu trong profile
+                const provinceCode = loadedProvinces.find(p => p.name === profileRes.province)?.code || '';
+                
+                // Cập nhật state của form với mã code
+                const profileWithCodes = {
+                    ...profileRes,
+                    provinceCode: provinceCode,
+                    districtCode: '', // Sẽ được load sau
+                    wardCode: '',     // Sẽ được load sau
+                };
+
+                setProfile(profileWithCodes);
+                setInitialProfile(profileWithCodes);
+
+                if (handleInfoUpdate) {
+                    handleInfoUpdate(getFullAvatarUrl(profileRes.avatarUrl), profileRes.firstName);
+                }
+
+            } catch (error) {
+                console.error("Lỗi khi tải dữ liệu ban đầu:", error);
+                setApiMessage({ type: 'error', text: 'Không thể tải thông tin hồ sơ.' });
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchInitialData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []); // Chỉ chạy một lần khi component được mount
+
+
+    // 2. useEffect: Lấy Quận/Huyện khi provinceCode thay đổi HOẶC khi danh sách tỉnh đã load xong
+    useEffect(() => {
+        const fetchDistricts = async () => {
+            if (profile.provinceCode) {
+                try {
+                    const response = await axios.get(`https://provinces.open-api.vn/api/p/${profile.provinceCode}?depth=2`);
+                    const loadedDistricts = response.data.districts;
+                    setDistricts(loadedDistricts);
+
+                    // Khôi phục lựa chọn quận nếu có trong dữ liệu ban đầu
+                    const districtCode = loadedDistricts.find(d => d.name === initialProfile.district)?.code || '';
+                    if (districtCode) {
+                        setProfile(p => ({...p, districtCode: districtCode}));
+                    }
+                } catch (error) {
+                    console.error("Lỗi khi tải danh sách quận/huyện:", error);
+                }
+            }
+        };
+        fetchDistricts();
+    }, [profile.provinceCode, initialProfile.district]);
+
+
+    // 3. useEffect: Lấy Phường/Xã khi districtCode thay đổi HOẶC khi danh sách huyện đã load xong
+    useEffect(() => {
+        const fetchWards = async () => {
+            if (profile.districtCode) {
+                try {
+                    const response = await axios.get(`https://provinces.open-api.vn/api/d/${profile.districtCode}?depth=2`);
+                    const loadedWards = response.data.wards;
+                    setWards(loadedWards);
+
+                    // Khôi phục lựa chọn phường/xã nếu có trong dữ liệu ban đầu
+                    const wardCode = loadedWards.find(w => w.name === initialProfile.ward)?.code || '';
+                    if (wardCode) {
+                         setProfile(p => ({...p, wardCode: wardCode}));
+                    }
+                } catch (error) {
+                    console.error("Lỗi khi tải danh sách phường/xã:", error);
+                }
+            }
+        };
+        fetchWards();
+    }, [profile.districtCode, initialProfile.ward]);
+
+    // Fetch dữ liệu profile ban đầu
     useEffect(() => {
         const fetchProfile = async () => {
             setIsLoading(true);
@@ -113,7 +211,7 @@ const UserProfileInfoForm = () => {
             }
         };
         fetchProfile();
-    }, [handleInfoUpdate]);
+    }, []); // Chỉ chạy 1 lần, bỏ handleInfoUpdate để tránh vòng lặp
     
     // Gửi tên lên component cha mỗi khi thay đổi [TẠM THỜI XÓA ĐOẠN CODE]
     // useEffect(() => {
@@ -126,9 +224,24 @@ const UserProfileInfoForm = () => {
     // }, [profile.firstName, profile.avatarUrl, initialProfile.firstName, handleInfoUpdate]);
 
 
+    // Sửa đổi handleChange để làm việc với mã code
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setProfile(prev => ({ ...prev, [name]: value }));
+        const newProfile = { ...profile, [name]: value };
+
+        if (name === 'provinceCode') {
+            newProfile.districtCode = '';
+            newProfile.wardCode = '';
+            setDistricts([]);
+            setWards([]);
+        }
+        if (name === 'districtCode') {
+            newProfile.wardCode = '';
+            setWards([]);
+        }
+
+        setProfile(newProfile);
+
         if (apiMessage) setApiMessage(null);
         if (errors[name]) setErrors(prev => ({ ...prev, [name]: null}));
     };
@@ -142,7 +255,6 @@ const UserProfileInfoForm = () => {
         try {
             let newAvatarPath = profile.avatarUrl;
 
-            // BƯỚC 1: Nếu có file avatar mới, upload nó trước
             if (avatarFile) {
                 const formData = new FormData();
                 formData.append('file', avatarFile);
@@ -151,23 +263,29 @@ const UserProfileInfoForm = () => {
                 newAvatarPath = avatarResponse.filePath; 
             }
 
-            // BƯỚC 2: Chuẩn bị dữ liệu để cập nhật profile
-            // Gửi tất cả các trường, giải quyết vấn đề phụ thuộc
+            // --- SỬA Ở ĐÂY: Dùng `provinceCode` để tìm tên ---
+            const provinceName = provinces.find(p => p.code === profile.provinceCode)?.name || '';
+            const districtName = districts.find(d => d.code === profile.districtCode)?.name || '';
+            const wardName = wards.find(w => w.code === profile.wardCode)?.name || '';
+
+            // Nếu backend lưu mã (code) thì gửi profile.province, profile.district...
+            // Nếu backend lưu tên thì gửi provinceName, districtName...
+            // Ở đây giả sử backend lưu tên
             const profileToUpdate = {
                 firstName: profile.firstName,
                 lastName: profile.lastName,
                 phoneNumber: profile.phoneNumber,
-                province: profile.province,
-                district: profile.district,
-                ward: profile.ward,
+                province: provinceName,
+                district: districtName,
+                ward: wardName,
                 streetAddress: profile.streetAddress,
                 avatarUrl: newAvatarPath, // Sử dụng đường dẫn avatar mới (nếu có)
             };
             
-            // BƯỚC 3: Gọi API cập nhật thông tin người dùng
+            // Gọi API cập nhật thông tin người dùng
             const updateResponse = await updateUserProfile(profileToUpdate);
 
-            // BƯỚC 4: Cập nhật state thành công
+            // Cập nhật state thành công
             const updatedProfileData = { ...profile, avatarUrl: newAvatarPath };
             setProfile(updatedProfileData);
             setInitialProfile(updatedProfileData);
@@ -216,9 +334,9 @@ const UserProfileInfoForm = () => {
                 {renderFloatingLabelTextField({ name: "lastName", labelText: "Họ", value: profile.lastName, onChange: handleChange, placeholder: "Nguyễn Văn...", disabled: isSubmitting})}
                 {renderFloatingLabelTextField({ name: "firstName", labelText: "Tên", value: profile.firstName, onChange: handleChange, placeholder: "A...", disabled: isSubmitting})}
                 {renderFloatingLabelTextField({ name: "phoneNumber", labelText: "Số điện thoại", value: profile.phoneNumber, onChange: handleChange, placeholder: "0xxxxxxxxx", type: "tel", disabled: isSubmitting })}
-                {renderFloatingLabelSelectField({ name: "province", labelText: "Tỉnh/Thành phố", value: profile.province, onChange: handleChange, options: provincesData, disabled: isSubmitting })}
-                {renderFloatingLabelSelectField({ name: "district", labelText: "Quận/Huyện", value: profile.district, onChange: handleChange, options: districtsData[profile.province] || [], disabled: !profile.province || isSubmitting })}
-                {renderFloatingLabelSelectField({ name: "ward", labelText: "Phường/Xã", value: profile.ward, onChange: handleChange, options: wardsData[profile.district] || [], disabled: !profile.district || isSubmitting })}
+                {renderFloatingLabelSelectField({ name: "provinceCode", labelText: "Tỉnh/Thành phố", value: profile.provinceCode, onChange: handleChange, options: provinces, disabled: isSubmitting })}
+                {renderFloatingLabelSelectField({ name: "districtCode", labelText: "Quận/Huyện", value: profile.districtCode, onChange: handleChange, options: districts, disabled: !profile.provinceCode || isSubmitting })}
+                {renderFloatingLabelSelectField({ name: "wardCode", labelText: "Phường/Xã", value: profile.wardCode, onChange: handleChange, options: wards, disabled: !profile.districtCode || isSubmitting })}
                 {renderFloatingLabelTextField({ name: "streetAddress", labelText: "Địa chỉ", value: profile.streetAddress, onChange: handleChange, placeholder: "Số nhà, tên đường...", disabled: isSubmitting, gridSize: { xs: 12 }, boxSx: { minWidth: '310%' } })}
             </Grid>
 
