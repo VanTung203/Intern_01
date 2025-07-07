@@ -10,7 +10,7 @@ using IdentityServerAPI.Models;
 using IdentityServerAPI.Configuration;
 // using IdentityServerAPI.Repositories;
 using IdentityServerAPI.Services;
-using IdentityServerAPI.Services.Interfaces; // Đã có
+using IdentityServerAPI.Services.Interfaces;
 using Microsoft.OpenApi.Models;
 using Microsoft.Extensions.Logging;
 

@@ -3,6 +3,7 @@ import React from 'react';
 import { Box, Grid, Typography, Link as MuiLink, AppBar, Toolbar, Container } from '@mui/material';
 // Không cần Paper ở đây vì trang con sẽ quyết định dùng Paper hay không
 // import { Link as RouterLink } from 'react-router-dom'; // Chỉ cần nếu header có link điều hướng chung bằng RouterLink
+import ChatWidget from '../../components/chat/ChatWidget';
 
 // --- Component Logo với Text (Tái sử dụng) ---
 // Có thể cân nhắc đưa component này ra một file riêng (ví dụ: src/components/common/AppLogo.js)
@@ -50,7 +51,7 @@ const RegistrationIllustration = () => (
 // --- Component Layout Chính ---
 // Prop `children` sẽ là nội dung của cột bên phải (ví dụ: RegisterForm, hoặc nội dung của PleaseVerifyEmailPage)
 const PublicPageLayout = ({ children }) => {
-  return (
+  return ( <>
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', backgroundColor: 'background.default' }}>
       {/* AppBar (Header chung) */}
       <AppBar position="static" color="transparent" elevation={0} sx={{ borderBottom: (theme) => `1px solid ${theme.palette.divider}` }}>
@@ -124,6 +125,10 @@ const PublicPageLayout = ({ children }) => {
         </Grid>
       </Grid>
     </Box>
+
+    <ChatWidget />
+    </>
+
   );
 };
 
