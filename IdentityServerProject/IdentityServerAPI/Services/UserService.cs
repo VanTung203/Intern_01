@@ -212,7 +212,11 @@ namespace IdentityServerAPI.Services
                     LockoutEnd = user.LockoutEnd,
                     TwoFactorEnabled = user.TwoFactorEnabled,
                     AvatarUrl = user.AvatarUrl,
-                    Roles = await _userManager.GetRolesAsync(user)
+                    Roles = await _userManager.GetRolesAsync(user),
+                    Province = user.Province,
+                    District = user.District,
+                    Ward = user.Ward,
+                    StreetAddress = user.StreetAddress
                 });
             }
 
