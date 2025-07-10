@@ -182,25 +182,32 @@ namespace IdentityServerAPI.Services
             }
 
             // 2. Lọc theo trạng thái
-            if (!string.IsNullOrEmpty(status) && status != "all")
+            if (!string.IsNullOrEmpty(status) && status.ToLower() != "all")
             {
+                // Biến isLocked dùng để kiểm tra một user có đang bị khóa hay không
+                Func<ApplicationUser, bool> isLocked = u => u.LockoutEnd != null && u.LockoutEnd > DateTimeOffset.UtcNow;
+
                 switch (status.ToLower())
                 {
-                    case "active":
-                        // Hoạt động: Đã xác thực và không bị khóa
-                        query = query.Where(u => u.EmailConfirmed && (u.LockoutEnd == null || u.LockoutEnd <= DateTimeOffset.UtcNow));
-                        break;
-                    case "inactive":
-                        // Chưa xác thực
-                        query = query.Where(u => !u.EmailConfirmed);
-                        break;
                     case "locked":
-                        // Bị khóa
+                        // Ưu tiên 1: Chỉ lấy những tài khoản BỊ KHÓA.
                         query = query.Where(u => u.LockoutEnd != null && u.LockoutEnd > DateTimeOffset.UtcNow);
+                        break;
+
+                    case "inactive":
+                        // Ưu tiên 2: Lấy những tài khoản CHƯA XÁC THỰC và KHÔNG BỊ KHÓA.
+                        query = query.Where(u => !u.EmailConfirmed && (u.LockoutEnd == null || u.LockoutEnd <= DateTimeOffset.UtcNow));
+                        break;
+
+                    case "active":
+                        // Ưu tiên 3: Lấy những tài khoản ĐÃ XÁC THỰC và KHÔNG BỊ KHÓA.
+                        query = query.Where(u => u.EmailConfirmed && (u.LockoutEnd == null || u.LockoutEnd <= DateTimeOffset.UtcNow));
                         break;
                 }
             }
 
+            // Chuyển đổi sang List để xử lý bất đồng bộ trong vòng lặp
+            
             var users = query.ToList();
 
             var userDtos = new List<UserProfileDto>();
