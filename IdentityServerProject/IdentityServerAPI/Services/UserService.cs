@@ -32,7 +32,8 @@ namespace IdentityServerAPI.Services
                 // Trả về 404 Not Found nếu không tìm thấy người dùng
                 return new NotFoundObjectResult(new { message = "Không tìm thấy người dùng." });
             }
-
+            // LẤY VAI TRÒ (ROLES) CỦA NGƯỜI DÙNG
+            var roles = await _userManager.GetRolesAsync(user);
             // Map từ ApplicationUser sang UserProfileDto
             var userProfileDto = new UserProfileDto
             {
@@ -46,7 +47,11 @@ namespace IdentityServerAPI.Services
                 District = user.District,
                 Ward = user.Ward,
                 StreetAddress = user.StreetAddress,
-                TwoFactorEnabled = user.TwoFactorEnabled
+                TwoFactorEnabled = user.TwoFactorEnabled,
+                EmailConfirmed = user.EmailConfirmed,
+                LockoutEnd = user.LockoutEnd,         
+                // GÁN VAI TRÒ VỪA LẤY ĐƯỢC VÀO DTO
+                Roles = roles
             };
             return new OkObjectResult(userProfileDto); // Trả về 200 OK với dữ liệu profile
         }
